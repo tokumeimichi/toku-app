@@ -15,19 +15,12 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Database ─────────────────────────────────────
+// ── Database ─────────────────────────────────────
 let db;
 
 if (process.env.DATABASE_URL) {
   console.log('Connecting to Aiven MySQL...');
-  db = mysql.createConnection({
-    host: 'toku-1-aakhowil-ca6c.h.aivencloud.com',
-    port: 16228,
-    user: 'avnadmin',
-    password: 'AVNS_rHf09BdWnsIR45shbSE',
-    database: 'defaultdb',
-    ssl: { rejectUnauthorized: false },
-    connectTimeout: 10000
-  });
+  db = mysql.createConnection(process.env.DATABASE_URL);
   
   db.connect((err) => {
     if (err) console.error('❌ DB Error:', err.message);
@@ -37,7 +30,7 @@ if (process.env.DATABASE_URL) {
   db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || 'adinoyi12',
+    password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'toku_app'
   });
   
