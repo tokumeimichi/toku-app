@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Withdraw - Toku Invest</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 240px; min-height: 100vh; background: linear-gradient(180deg, #0f0c29, #302b63); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar-logo { padding: 24px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo h1 { color: #fff; font-size: 1.4rem; font-weight: 700; }
+    .sidebar-logo span { color: #48c6ef; }
+    .sidebar-logo p { color: rgba(255,255,255,0.45); font-size: 0.72rem; margin: 0; }
+    .sidebar-menu { padding: 16px 0; flex: 1; }
+    .menu-label { font-size: 0.68rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 20px 4px; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255,255,255,0.65); font-size: 0.88rem; cursor: pointer; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+    .menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .menu-item.active { background: rgba(108,99,255,0.3); color: #fff; border-left: 3px solid #6c63ff; }
+    .menu-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .user-info { display: flex; align-items: center; gap: 10px; color: #fff; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #6c63ff, #48c6ef); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 0.84rem; font-weight: 600; }
+    .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+
+    /* MAIN */
+    .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+    .topbar-left h2 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .topbar-left p { font-size: 0.78rem; color: #888; margin: 0; }
+    .logout-btn { padding: 7px 16px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; }
+    .page-body { padding: 24px 28px; }
+
+    /* BALANCE CARD */
+    .balance-card {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      border-radius: 16px; padding: 22px 28px;
+      color: #fff; margin-bottom: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .balance-card .bal-label { font-size: 0.82rem; opacity: 0.85; margin-bottom: 4px; }
+    .balance-card .bal-amount { font-size: 1.8rem; font-weight: 700; }
+    .balance-card .bal-note { font-size: 0.75rem; opacity: 0.75; margin-top: 2px; }
+    .balance-card .bal-icon { font-size: 2.5rem; opacity: 0.8; }
+
+    /* GRID */
+    .page-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+
+    /* FORM CARD */
+    .form-card { background: #fff; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .form-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 20px; }
+    .form-label { font-size: 0.78rem; font-weight: 600; color: #555; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+    .form-control { border-radius: 10px; border: 1.5px solid #e0e0e0; padding: 10px 14px; font-size: 0.9rem; font-family: 'Poppins', sans-serif; background: #fafafa; width: 100%; }
+    .form-control:focus { border-color: #6c63ff; box-shadow: 0 0 0 3px rgba(108,99,255,0.15); background: #fff; outline: none; }
+    .amount-wrap { position: relative; }
+    .amount-wrap .currency { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #6c63ff; font-weight: 700; font-size: 0.95rem; }
+    .amount-wrap .form-control { padding-left: 32px; }
+    .btn-withdraw { width: 100%; padding: 12px; border: none; border-radius: 10px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; font-size: 0.95rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; margin-top: 8px; transition: opacity 0.2s; }
+    .btn-withdraw:hover { opacity: 0.9; }
+    .alert-msg { padding: 10px 14px; border-radius: 10px; font-size: 0.83rem; margin-bottom: 14px; display: none; }
+    .alert-error { background: #fff0f0; color: #e53e3e; border: 1px solid #fed7d7; }
+    .alert-success { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+    .min-note { font-size: 0.75rem; color: #888; margin-top: 5px; }
+
+    /* HISTORY CARD */
+    .history-card { background: #fff; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .history-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 16px; }
+    .history-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .history-item:last-child { border-bottom: none; }
+    .h-icon { width: 38px; height: 38px; border-radius: 10px; background: #f5f5ff; display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .h-info { flex: 1; }
+    .h-info .h-title { font-size: 0.85rem; font-weight: 600; color: #1a1a2e; }
+    .h-info .h-bank  { font-size: 0.75rem; color: #888; }
+    .h-info .h-date  { font-size: 0.72rem; color: #aaa; }
+    .h-right { text-align: right; }
+    .h-amount { font-size: 0.92rem; font-weight: 700; color: #ef4444; }
+    .h-status { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; margin-top: 3px; display: inline-block; }
+    .status-pending  { background: #fffbeb; color: #f59e0b; }
+    .status-approved { background: #f0fff4; color: #22c55e; }
+    .status-rejected { background: #fff0f0; color: #ef4444; }
+    .empty-state { text-align: center; color: #aaa; font-size: 0.85rem; padding: 30px 0; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 0; overflow: hidden; }
+      .main-content { margin-left: 0; }
+      .page-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Toku<span>.</span></h1>
+      <p>Investment Platform</p>
+    </div>
+    <div class="sidebar-menu">
+      <div class="menu-label">Menu</div>
+      <a class="menu-item" href="dashboard.html"><span class="icon">🏠</span> Dashboard</a>
+      <a class="menu-item" href="invest.html"><span class="icon">📦</span> Invest</a>
+      <a class="menu-item active" href="withdraw.html"><span class="icon">💸</span> Withdraw</a>
+      <a class="menu-item" href="referral.html"><span class="icon">🔗</span> Referrals</a>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div>
+          <div class="user-name" id="sidebarName">Loading...</div>
+          <div class="user-role">Investor</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Withdraw Funds</h2>
+        <p>Minimum withdrawal: ₦500</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="page-body">
+
+      <!-- BALANCE -->
+      <div class="balance-card">
+        <div>
+          <div class="bal-label">💰 Available Balance</div>
+          <div class="bal-amount">₦<span id="balanceAmt">0.00</span></div>
+          <div class="bal-note">Minimum withdrawal is ₦500</div>
+        </div>
+        <div class="bal-icon">💸</div>
+      </div>
+
+      <div class="page-grid">
+
+        <!-- WITHDRAWAL FORM -->
+        <div class="form-card">
+          <h3>💸 Request Withdrawal</h3>
+
+          <div class="alert-msg alert-error"   id="errorMsg"></div>
+          <div class="alert-msg alert-success" id="successMsg"></div>
+
+          <form id="withdrawForm" novalidate>
+            <div class="mb-3">
+              <label class="form-label">Amount</label>
+              <div class="amount-wrap">
+                <span class="currency">₦</span>
+                <input type="number" class="form-control" id="amount" placeholder="500" min="500" required/>
+              </div>
+              <div class="min-note">⚠️ Minimum: ₦500</div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Bank Name</label>
+              <input type="text" class="form-control" id="bankName" placeholder="e.g. GTBank" required/>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Account Number</label>
+              <input type="text" class="form-control" id="accountNo" placeholder="0123456789" maxlength="10" required/>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Account Name</label>
+              <input type="text" class="form-control" id="accountName" placeholder="e.g. Abdul Adinoyi" required/>
+            </div>
+            <button type="submit" class="btn-withdraw" id="withdrawBtn">
+              💸 &nbsp;Submit Withdrawal Request
+            </button>
+          </form>
+        </div>
+
+        <!-- WITHDRAWAL HISTORY -->
+        <div class="history-card">
+          <h3>📋 Withdrawal History</h3>
+          <div id="historyList">
+            <div class="empty-state">Loading...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    const headers = {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+
+    async function loadPage() {
+      // Profile
+      const profRes = await fetch('/api/profile', { headers });
+      const profile = await profRes.json();
+
+      const name = profile.full_name || localStorage.getItem('userName');
+      document.getElementById('sidebarName').textContent   = name;
+      document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+      document.getElementById('balanceAmt').textContent    =
+        Number(profile.balance).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+
+      // History
+      const wdRes = await fetch('/api/withdrawals', { headers });
+      const wds   = await wdRes.json();
+
+      const list = document.getElementById('historyList');
+      if (wds.length === 0) {
+        list.innerHTML = '<div class="empty-state">No withdrawals yet</div>';
+      } else {
+        list.innerHTML = wds.map(w => `
+          <div class="history-item">
+            <div class="h-icon">💸</div>
+            <div class="h-info">
+              <div class="h-title">₦${Number(w.amount).toLocaleString()}</div>
+              <div class="h-bank">${w.bank_name} • ${w.account_no}</div>
+              <div class="h-date">${new Date(w.created_at).toLocaleDateString('en-NG', {day:'numeric',month:'short',year:'numeric'})}</div>
+            </div>
+            <div class="h-right">
+              <div class="h-amount">-₦${Number(w.amount).toLocaleString()}</div>
+              <span class="h-status status-${w.status}">${w.status}</span>
+            </div>
+          </div>`).join('');
+      }
+    }
+
+    // Submit withdrawal
+    document.getElementById('withdrawForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const errorBox   = document.getElementById('errorMsg');
+      const successBox = document.getElementById('successMsg');
+      const btn        = document.getElementById('withdrawBtn');
+
+      errorBox.style.display = successBox.style.display = 'none';
+
+      const amount      = document.getElementById('amount').value;
+      const bank_name   = document.getElementById('bankName').value.trim();
+      const account_no  = document.getElementById('accountNo').value.trim();
+      const account_name = document.getElementById('accountName').value.trim();
+
+      if (!amount || !bank_name || !account_no || !account_name) {
+        errorBox.textContent   = '⚠️ Please fill in all fields.';
+        errorBox.style.display = 'block';
+        return;
+      }
+      if (Number(amount) < 500) {
+        errorBox.textContent   = '❌ Minimum withdrawal is ₦500.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      btn.textContent = 'Submitting...';
+      btn.disabled    = true;
+
+      try {
+        const res  = await fetch('/api/withdraw', {
+          method:  'POST',
+          headers,
+          body:    JSON.stringify({ amount: Number(amount), bank_name, account_no, account_name })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          successBox.textContent   = '✅ ' + data.message;
+          successBox.style.display = 'block';
+          document.getElementById('withdrawForm').reset();
+          loadPage();
+        } else {
+          errorBox.textContent   = '❌ ' + data.message;
+          errorBox.style.display = 'block';
+        }
+      } catch(err) {
+        errorBox.textContent   = '❌ Cannot connect to server.';
+        errorBox.style.display = 'block';
+      }
+
+      btn.textContent = '💸  Submit Withdrawal Request';
+      btn.disabled    = false;
+    });
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+
+    loadPage();
+  </script>
+</body>
+</html>

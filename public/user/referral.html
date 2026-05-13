@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Referrals - Toku Invest</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 240px; min-height: 100vh; background: linear-gradient(180deg, #0f0c29, #302b63); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar-logo { padding: 24px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo h1 { color: #fff; font-size: 1.4rem; font-weight: 700; }
+    .sidebar-logo span { color: #48c6ef; }
+    .sidebar-logo p { color: rgba(255,255,255,0.45); font-size: 0.72rem; margin: 0; }
+    .sidebar-menu { padding: 16px 0; flex: 1; }
+    .menu-label { font-size: 0.68rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 20px 4px; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255,255,255,0.65); font-size: 0.88rem; cursor: pointer; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+    .menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .menu-item.active { background: rgba(108,99,255,0.3); color: #fff; border-left: 3px solid #6c63ff; }
+    .menu-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .user-info { display: flex; align-items: center; gap: 10px; color: #fff; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #6c63ff, #48c6ef); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 0.84rem; font-weight: 600; }
+    .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+
+    /* MAIN */
+    .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+    .topbar-left h2 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .topbar-left p { font-size: 0.78rem; color: #888; margin: 0; }
+    .logout-btn { padding: 7px 16px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; }
+    .page-body { padding: 24px 28px; }
+
+    /* HERO BANNER */
+    .ref-banner {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      border-radius: 18px; padding: 28px 32px;
+      color: #fff; margin-bottom: 24px;
+      display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 20px;
+    }
+    .ref-banner h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 6px; }
+    .ref-banner p { font-size: 0.85rem; opacity: 0.88; margin: 0; max-width: 400px; }
+    .ref-banner .big-emoji { font-size: 3rem; }
+
+    /* STATS ROW */
+    .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border-radius: 14px; padding: 20px 22px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); text-align: center; }
+    .stat-card .s-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .stat-card .s-val { font-size: 1.4rem; font-weight: 700; color: #6c63ff; }
+    .stat-card .s-label { font-size: 0.78rem; color: #888; margin: 0; }
+
+    /* REFERRAL LINK CARD */
+    .link-card { background: #fff; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    .link-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 16px; }
+    .link-box { display: flex; gap: 10px; align-items: center; }
+    .link-input { flex: 1; background: #f5f5ff; border: 1.5px dashed #6c63ff; border-radius: 10px; padding: 12px 16px; font-size: 0.85rem; color: #6c63ff; font-family: 'Poppins', sans-serif; cursor: text; outline: none; }
+    .btn-copy { padding: 12px 20px; background: linear-gradient(135deg,#6c63ff,#48c6ef); color: #fff; border: none; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 0.85rem; font-weight: 600; cursor: pointer; white-space: nowrap; transition: opacity 0.2s; }
+    .btn-copy:hover { opacity: 0.9; }
+    .share-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+    .btn-share { padding: 9px 16px; border-radius: 10px; border: 1.5px solid #e0e0e0; background: #fff; font-family: 'Poppins', sans-serif; font-size: 0.82rem; font-weight: 500; cursor: pointer; transition: all 0.2s; color: #444; }
+    .btn-share:hover { border-color: #6c63ff; background: #f5f5ff; color: #6c63ff; }
+    .copied-msg { font-size: 0.78rem; color: #22c55e; margin-top: 8px; display: none; font-weight: 600; }
+
+    /* HOW IT WORKS */
+    .how-card { background: #fff; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 24px; }
+    .how-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 18px; }
+    .steps-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .step-item { text-align: center; padding: 16px; background: #f9f9ff; border-radius: 12px; }
+    .step-item .step-num { width: 32px; height: 32px; background: linear-gradient(135deg,#6c63ff,#48c6ef); border-radius: 50%; color: #fff; font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 10px; }
+    .step-item .step-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .step-item .step-title { font-size: 0.85rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .step-item .step-desc { font-size: 0.76rem; color: #888; }
+
+    /* REFERRAL LIST */
+    .list-card { background: #fff; border-radius: 16px; padding: 24px 28px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .list-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 16px; }
+    .ref-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid #f5f5f5; }
+    .ref-item:last-child { border-bottom: none; }
+    .ref-avatar { width: 40px; height: 40px; background: linear-gradient(135deg,#6c63ff,#48c6ef); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1rem; font-weight: 700; flex-shrink: 0; }
+    .ref-info { flex: 1; }
+    .ref-info .ref-name { font-size: 0.88rem; font-weight: 600; color: #1a1a2e; }
+    .ref-info .ref-date { font-size: 0.74rem; color: #aaa; }
+    .ref-bonus { font-size: 0.95rem; font-weight: 700; color: #22c55e; }
+    .empty-state { text-align: center; color: #aaa; font-size: 0.85rem; padding: 30px 0; }
+
+    @media (max-width: 768px) {
+      .sidebar { width: 0; overflow: hidden; }
+      .main-content { margin-left: 0; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .steps-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Toku<span>.</span></h1>
+      <p>Investment Platform</p>
+    </div>
+    <div class="sidebar-menu">
+      <div class="menu-label">Menu</div>
+      <a class="menu-item" href="dashboard.html"><span class="icon">🏠</span> Dashboard</a>
+      <a class="menu-item" href="invest.html"><span class="icon">📦</span> Invest</a>
+      <a class="menu-item" href="withdraw.html"><span class="icon">💸</span> Withdraw</a>
+      <a class="menu-item active" href="referral.html"><span class="icon">🔗</span> Referrals</a>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div>
+          <div class="user-name" id="sidebarName">Loading...</div>
+          <div class="user-role">Investor</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Refer & Earn</h2>
+        <p>Earn 10% of every package your referrals buy</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="page-body">
+
+      <!-- HERO -->
+      <div class="ref-banner">
+        <div>
+          <h2>🔗 Invite Friends & Earn!</h2>
+          <p>Share your unique referral link. When your friend buys any investment package, you instantly earn <strong>10% of their package price</strong> — straight to your balance!</p>
+        </div>
+        <div class="big-emoji">💰</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="s-icon">👥</div>
+          <div class="s-val" id="totalRefs">0</div>
+          <p class="s-label">Total Referrals</p>
+        </div>
+        <div class="stat-card">
+          <div class="s-icon">💰</div>
+          <div class="s-val">₦<span id="totalBonus">0</span></div>
+          <p class="s-label">Total Bonus Earned</p>
+        </div>
+        <div class="stat-card">
+          <div class="s-icon">📦</div>
+          <div class="s-val" id="activeRefs">0</div>
+          <p class="s-label">Active Investors</p>
+        </div>
+      </div>
+
+      <!-- REFERRAL LINK -->
+      <div class="link-card">
+        <h3>🔗 Your Referral Link</h3>
+        <div class="link-box">
+          <input class="link-input" id="refLink" readonly value="Loading..."/>
+          <button class="btn-copy" onclick="copyLink()">📋 Copy Link</button>
+        </div>
+        <div class="copied-msg" id="copiedMsg">✅ Link copied to clipboard!</div>
+        <div class="share-row">
+          <button class="btn-share" onclick="shareWhatsApp()">💬 Share on WhatsApp</button>
+          <button class="btn-share" onclick="shareTelegram()">✈️ Share on Telegram</button>
+          <button class="btn-share" onclick="shareTwitter()">🐦 Share on Twitter</button>
+        </div>
+      </div>
+
+      <!-- HOW IT WORKS -->
+      <div class="how-card">
+        <h3>⚡ How It Works</h3>
+        <div class="steps-row">
+          <div class="step-item">
+            <div class="step-num">1</div>
+            <div class="step-icon">🔗</div>
+            <div class="step-title">Share Your Link</div>
+            <div class="step-desc">Copy your unique referral link and share it with friends and family</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">2</div>
+            <div class="step-icon">👤</div>
+            <div class="step-title">Friend Signs Up</div>
+            <div class="step-desc">Your friend creates an account using your referral link</div>
+          </div>
+          <div class="step-item">
+            <div class="step-num">3</div>
+            <div class="step-icon">💰</div>
+            <div class="step-title">You Earn Instantly</div>
+            <div class="step-desc">When they buy their first package, 10% goes straight to your balance</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- REFERRAL LIST -->
+      <div class="list-card">
+        <h3>👥 My Referrals</h3>
+        <div id="refList">
+          <div class="empty-state">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    const headers = {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+
+    let myRefLink = '';
+
+    async function loadPage() {
+      // Profile
+      const profRes = await fetch('/api/profile', { headers });
+      const profile = await profRes.json();
+
+      const name = profile.full_name || localStorage.getItem('userName');
+      document.getElementById('sidebarName').textContent   = name;
+      document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+
+      // Set referral link
+      const code = profile.referral_code;
+      myRefLink  = `${window.location.origin}/user/signup.html?ref=${code}`;
+      document.getElementById('refLink').value = myRefLink;
+
+      // Load referrals
+      const refRes  = await fetch('/api/referrals', { headers });
+      const refs    = await refRes.json();
+
+      // Stats
+      document.getElementById('totalRefs').textContent = refs.length;
+      const totalBonus = refs.reduce((sum, r) => sum + Number(r.bonus_amount), 0);
+      document.getElementById('totalBonus').textContent = totalBonus.toLocaleString();
+      document.getElementById('activeRefs').textContent = refs.length;
+
+      // List
+      const list = document.getElementById('refList');
+      if (refs.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            🔗 No referrals yet.<br/>
+            Share your link to start earning!
+          </div>`;
+      } else {
+        list.innerHTML = refs.map(r => `
+          <div class="ref-item">
+            <div class="ref-avatar">${r.referred_name.charAt(0).toUpperCase()}</div>
+            <div class="ref-info">
+              <div class="ref-name">${r.referred_name}</div>
+              <div class="ref-date">
+                Bought ₦${Number(r.package_price).toLocaleString()} package •
+                ${new Date(r.created_at).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})}
+              </div>
+            </div>
+            <div class="ref-bonus">+₦${Number(r.bonus_amount).toLocaleString()}</div>
+          </div>`).join('');
+      }
+    }
+
+    function copyLink() {
+      navigator.clipboard.writeText(myRefLink).then(() => {
+        const msg = document.getElementById('copiedMsg');
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 3000);
+      });
+    }
+
+    function shareWhatsApp() {
+      const text = `💰 Join Toku Invest and start earning 20% daily returns!\n\nUse my referral link:\n${myRefLink}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareTelegram() {
+      const text = `💰 Join Toku Invest and earn 20% daily returns! Use my link: ${myRefLink}`;
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(myRefLink)}&text=${encodeURIComponent(text)}`, '_blank');
+    }
+
+    function shareTwitter() {
+      const text = `💰 I'm earning daily returns on Toku Invest! Join me and start investing today.`;
+      window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(myRefLink)}`, '_blank');
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+
+    loadPage();
+  </script>
+</body>
+</html>

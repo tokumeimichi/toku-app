@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Investments - Admin | Toku</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; }
+    .sidebar { width: 260px; background: linear-gradient(180deg, #0f0c29, #302b63); min-height: 100vh; position: fixed; }
+    .sidebar h3 { color: #fff; padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar a { display: block; color: rgba(255,255,255,0.7); padding: 12px 20px; text-decoration: none; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(108,99,255,0.3); color: #fff; }
+    .main-content { margin-left: 260px; padding: 20px; }
+    table { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    .badge-active { background: #22c55e; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; }
+    .badge-completed { background: #6c63ff; }
+    .refresh-btn { background: #6c63ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h3>Toku Admin</h3>
+  <a href="dashboard.html">📊 Dashboard</a>
+  <a href="users.html">👥 Users</a>
+  <a href="investments.html" class="active">💰 Investments</a>
+  <a href="withdrawals.html">💸 Withdrawals</a>
+  <a href="login.html" onclick="logout()">🚪 Logout</a>
+</div>
+
+<div class="main-content">
+  <h2>All Investments</h2>
+  <button class="refresh-btn" onclick="loadInvestments()">🔄 Refresh</button>
+  
+  <table>
+    <thead>
+      <tr><th>ID</th><th>User</th><th>Package</th><th>Amount</th><th>Daily Return</th><th>Days Claimed</th><th>Status</th><th>Start Date</th><th>End Date</th></tr>
+    </thead>
+    <tbody id="investmentsTableBody"><tr><td colspan="9">Loading...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+const token = localStorage.getItem('adminToken');
+if (!token) window.location.href = 'login.html';
+
+async function loadInvestments() {
+  try {
+    const res = await fetch('/api/admin/investments', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const investments = await res.json();
+    
+    const tbody = document.getElementById('investmentsTableBody');
+    if (investments.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="9">No investments found</td></tr>';
+      return;
+    }
+    
+    tbody.innerHTML = investments.map(i => `
+      <tr>
+        <td>${i.id}</td>
+        <td>${i.full_name}</td>
+        <td>${i.package_name}</td>
+        <td>₦${Number(i.amount).toLocaleString()}</td>
+        <td>₦${Number(i.daily_return).toLocaleString()}</td>
+        <td>${i.days_claimed || 0}/${i.duration_days || 7}</td>
+        <td><span class="badge-active ${i.status === 'completed' ? 'badge-completed' : ''}">${i.status}</span></td>
+        <td>${new Date(i.start_date).toLocaleDateString()}</td>
+        <td>${new Date(i.end_date).toLocaleDateString()}</td>
+      </tr>
+    `).join('');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function logout() {
+  localStorage.removeItem('adminToken');
+  window.location.href = 'login.html';
+}
+
+loadInvestments();
+setInterval(loadInvestments, 30000);
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard - Toku Invest</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px; min-height: 100vh;
+      background: linear-gradient(180deg, #0f0c29, #302b63);
+      display: flex; flex-direction: column;
+      position: fixed; top: 0; left: 0; z-index: 100;
+    }
+    .sidebar-logo { padding: 24px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo h1 { color: #fff; font-size: 1.4rem; font-weight: 700; }
+    .sidebar-logo span { color: #48c6ef; }
+    .sidebar-logo p { color: rgba(255,255,255,0.45); font-size: 0.72rem; margin: 0; }
+    .sidebar-menu { padding: 16px 0; flex: 1; }
+    .menu-label { font-size: 0.68rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 20px 4px; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255,255,255,0.65); font-size: 0.88rem; cursor: pointer; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+    .menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .menu-item.active { background: rgba(108,99,255,0.3); color: #fff; border-left: 3px solid #6c63ff; }
+    .menu-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .user-info { display: flex; align-items: center; gap: 10px; color: #fff; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #6c63ff, #48c6ef); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 0.84rem; font-weight: 600; }
+    .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+
+    .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+    .topbar-left h2 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .topbar-left p { font-size: 0.78rem; color: #888; margin: 0; }
+    .logout-btn { padding: 7px 16px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; }
+
+    .page-body { padding: 24px 28px; }
+
+    /* BALANCE BANNER WITH TIMER */
+    .balance-banner {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      border-radius: 18px; padding: 24px 28px;
+      color: #fff; margin-bottom: 20px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    .balance-banner .bal-label { font-size: 0.82rem; opacity: 0.85; margin-bottom: 4px; }
+    .balance-banner .bal-amount { font-size: 2rem; font-weight: 700; }
+    .claim-btn {
+      padding: 12px 28px; border: none; border-radius: 12px;
+      background: #fff; color: #6c63ff;
+      font-size: 0.92rem; font-weight: 700;
+      font-family: 'Poppins', sans-serif;
+      cursor: pointer;
+    }
+    .claim-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    #claimTimer {
+      font-size: 2rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 20px; }
+    .stat-card { background: #fff; border-radius: 14px; padding: 18px 20px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .stat-card .s-val { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+    .stat-card .s-label { font-size: 0.75rem; color: #888; }
+
+    .package-card { background: #fff; border-radius: 14px; padding: 20px 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); margin-bottom: 20px; }
+    .package-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 14px; }
+    .package-info { display: flex; gap: 12px; flex-wrap: wrap; }
+    .pkg-badge { background: #f5f5ff; border-radius: 10px; padding: 10px 16px; text-align: center; flex: 1; }
+    .pkg-badge .pb-val { font-size: 1.1rem; font-weight: 700; color: #6c63ff; }
+    .pkg-badge .pb-label { font-size: 0.72rem; color: #888; }
+    .progress { height: 8px; border-radius: 8px; background: #f0f0f0; margin-top: 14px; }
+    .progress-bar { background: linear-gradient(135deg, #6c63ff, #48c6ef); border-radius: 8px; height: 100%; }
+
+    .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .panel { background: #fff; border-radius: 14px; padding: 20px 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); }
+    .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .action-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 14px; border-radius: 12px; border: 1.5px solid #ebebeb; text-decoration: none; font-size: 0.8rem; font-weight: 500; color: #333; }
+    .action-btn:hover { border-color: #6c63ff; background: #f5f5ff; color: #6c63ff; }
+
+    .activity-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid #f5f5f5; }
+    .act-amount { font-weight: 700; }
+    .amt-green { color: #22c55e; }
+
+    .popup-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; align-items: center; justify-content: center; }
+    .popup-overlay.show { display: flex; }
+    .popup-box { background: #fff; border-radius: 20px; padding: 40px 32px; text-align: center; max-width: 340px; }
+    .popup-close { padding: 10px 28px; background: linear-gradient(135deg,#6c63ff,#48c6ef); color: #fff; border: none; border-radius: 10px; cursor: pointer; }
+
+    @media (max-width: 768px) { .sidebar { width: 0; overflow: hidden; } .main-content { margin-left: 0; } .stats-grid { grid-template-columns: repeat(2,1fr); } .bottom-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <div class="sidebar-logo"><h1>Toku<span>.</span></h1><p>Investment Platform</p></div>
+  <div class="sidebar-menu">
+    <div class="menu-label">Menu</div>
+    <a class="menu-item active" href="dashboard.html"><span class="icon">🏠</span> Dashboard</a>
+    <a class="menu-item" href="invest.html"><span class="icon">📦</span> Invest</a>
+    <a class="menu-item" href="withdraw.html"><span class="icon">💸</span> Withdraw</a>
+    <a class="menu-item" href="referral.html"><span class="icon">🔗</span> Referrals</a>
+  </div>
+  <div class="sidebar-bottom">
+    <div class="user-info">
+      <div class="user-avatar" id="sidebarAvatar">?</div>
+      <div><div class="user-name" id="sidebarName">Loading...</div><div class="user-role">Investor</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="main-content">
+  <div class="topbar">
+    <div class="topbar-left"><h2>My Dashboard</h2><p id="topbarDate"></p></div>
+    <button class="logout-btn" onclick="logout()">Log Out</button>
+  </div>
+
+  <div class="page-body">
+    <!-- BALANCE BANNER WITH TIMER -->
+    <div class="balance-banner">
+      <div><div class="bal-label">💰 Available Balance</div><div class="bal-amount">₦<span id="balanceAmt">0.00</span></div></div>
+      <div style="text-align: right;">
+        <div id="claimTimer" style="font-size: 1.8rem; font-weight: bold;">--:--:--</div>
+        <div style="font-size: 0.8rem;">Pending: ₦<span id="pendingAmount">0.00</span></div>
+        <button id="claimBtn" onclick="claimReturn()" class="claim-btn" style="display:none; margin-top:5px;">Claim Now</button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><div class="s-val">₦<span id="totalInvested">0</span></div><div class="s-label">Total Invested</div></div>
+      <div class="stat-card"><div class="s-val">₦<span id="totalEarned">0</span></div><div class="s-label">Total Earned</div></div>
+      <div class="stat-card"><div class="s-val">₦<span id="totalWithdrawn">0</span></div><div class="s-label">Total Withdrawn</div></div>
+      <div class="stat-card"><div class="s-val">₦<span id="refEarned">0</span></div><div class="s-label">Referral Earned</div></div>
+    </div>
+
+    <div class="package-card"><h3>📦 Active Investment Package</h3><div id="packageContent"><div class="no-package">No active package. <a href="invest.html">Buy one now →</a></div></div></div>
+
+    <div class="bottom-grid">
+      <div class="panel"><h3>⚡ Quick Actions</h3><div class="action-grid"><a class="action-btn" href="invest.html">📦 Buy Package</a><a class="action-btn" href="withdraw.html">💸 Withdraw</a><a class="action-btn" href="referral.html">🔗 Refer & Earn</a></div></div>
+      <div class="panel"><h3>📋 Recent Activity</h3><div class="activity-list" id="activityList">No activity yet</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="popup-overlay" id="claimPopup"><div class="popup-box"><div class="p-icon">🎉</div><h3>Return Claimed!</h3><p id="claimPopupMsg"></p><button class="popup-close" onclick="closePopup()">OK</button></div></div>
+
+<script>
+const token = localStorage.getItem('token');
+if (!token) window.location.href = 'login.html';
+const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token };
+
+document.getElementById('topbarDate').innerText = new Date().toLocaleDateString('en-US', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+async function loadDashboard() {
+  const profRes = await fetch('/api/profile', { headers });
+  const profile = await profRes.json();
+  const statRes = await fetch('/api/stats', { headers });
+  const stats = await statRes.json();
+  const claimRes = await fetch('/api/claims', { headers });
+  const claims = await claimRes.json();
+  const wdRes = await fetch('/api/withdrawals', { headers });
+  const wds = await wdRes.json();
+
+  document.getElementById('sidebarName').innerText = profile.full_name || 'User';
+  document.getElementById('sidebarAvatar').innerText = (profile.full_name || 'U').charAt(0).toUpperCase();
+  document.getElementById('balanceAmt').innerText = Number(profile.balance || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+  document.getElementById('totalInvested').innerText = Number(stats.total_invested || 0).toLocaleString();
+  document.getElementById('totalEarned').innerText = Number(stats.total_earned || 0).toLocaleString();
+  document.getElementById('totalWithdrawn').innerText = Number(stats.total_withdrawn || 0).toLocaleString();
+  document.getElementById('refEarned').innerText = Number(stats.referral_earned || 0).toLocaleString();
+
+  if (profile.inv_id) {
+    const pct = (profile.days_claimed / 7) * 100;
+    document.getElementById('packageContent').innerHTML = `
+      <div class="package-info">
+        <div class="pkg-badge"><div class="pb-val">${profile.package_name}</div><div class="pb-label">Package</div></div>
+        <div class="pkg-badge"><div class="pb-val">₦${Number(profile.package_price).toLocaleString()}</div><div class="pb-label">Amount</div></div>
+        <div class="pkg-badge"><div class="pb-val">₦${Number(profile.daily_return).toLocaleString()}</div><div class="pb-label">Daily Return</div></div>
+        <div class="pkg-badge"><div class="pb-val">${7 - profile.days_claimed} days</div><div class="pb-label">Days Left</div></div>
+      </div>
+      <div class="progress"><div class="progress-bar" style="width:${pct}%"></div></div>
+      <div class="progress-label">${profile.days_claimed}/7 days claimed</div>`;
+  }
+
+  const activity = [...claims.map(c => ({ type:'claim', amount:c.amount, date:c.claim_date })), ...wds.map(w => ({ type:'withdraw', amount:w.amount, date:w.created_at }))].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,5);
+  if (activity.length) document.getElementById('activityList').innerHTML = activity.map(a => `<div class="activity-item"><div class="act-amount amt-green">${a.type==='claim'?'+':'-'}₦${Number(a.amount).toLocaleString()}</div><div>${a.type} on ${new Date(a.date).toLocaleDateString()}</div></div>`).join('');
+}
+
+async function claimReturn() {
+  const btn = document.getElementById('claimBtn');
+  btn.disabled = true;
+  btn.innerText = 'Claiming...';
+  const res = await fetch('/api/claim', { method:'POST', headers });
+  const data = await res.json();
+  if (res.ok) {
+    document.getElementById('claimPopupMsg').innerHTML = `₦${Number(data.amount).toLocaleString()} added!`;
+    document.getElementById('claimPopup').classList.add('show');
+    loadDashboard();
+    loadClaimStatus();
+  } else alert(data.message);
+  btn.disabled = false;
+  btn.innerText = 'Claim Now';
+}
+
+let timerInterval = null;
+async function loadClaimStatus() {
+  const res = await fetch('/api/user/claim-status', { headers });
+  const data = await res.json();
+  if (!data.active) { document.getElementById('claimTimer').innerText = 'No active plan'; return; }
+  if (data.canClaimNow === 1) {
+    document.getElementById('claimTimer').innerText = 'Ready!';
+    document.getElementById('claimBtn').style.display = 'inline-block';
+    document.getElementById('pendingAmount').innerText = data.earningsPerPeriod;
+  } else {
+    document.getElementById('claimBtn').style.display = 'none';
+    document.getElementById('pendingAmount').innerText = '0';
+    if (timerInterval) clearInterval(timerInterval);
+    let remaining = data.countdown;
+    timerInterval = setInterval(() => {
+      if (remaining <= 0) { clearInterval(timerInterval); loadClaimStatus(); return; }
+      const h = Math.floor(remaining / 3600000);
+      const m = Math.floor((remaining % 3600000) / 60000);
+      const s = Math.floor((remaining % 60000) / 1000);
+      document.getElementById('claimTimer').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+      remaining -= 1000;
+    }, 1000);
+  }
+}
+
+function closePopup() { document.getElementById('claimPopup').classList.remove('show'); }
+function logout() { localStorage.clear(); window.location.href = 'login.html'; }
+
+loadDashboard();
+loadClaimStatus();
+</script>
+</body>
+</html>

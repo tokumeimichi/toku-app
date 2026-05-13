@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users - Admin | Toku</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; }
+    .sidebar { width: 260px; background: linear-gradient(180deg, #0f0c29, #302b63); min-height: 100vh; position: fixed; }
+    .sidebar h3 { color: #fff; padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar a { display: block; color: rgba(255,255,255,0.7); padding: 12px 20px; text-decoration: none; }
+    .sidebar a:hover, .sidebar a.active { background: rgba(108,99,255,0.3); color: #fff; }
+    .main-content { margin-left: 260px; padding: 20px; }
+    table { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+    .refresh-btn { background: #6c63ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; }
+    .search-box { padding: 10px; margin-bottom: 20px; width: 300px; border: 1px solid #ddd; border-radius: 8px; }
+  </style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h3>Toku Admin</h3>
+  <a href="dashboard.html">📊 Dashboard</a>
+  <a href="users.html" class="active">👥 Users</a>
+  <a href="investments.html">💰 Investments</a>
+  <a href="withdrawals.html">💸 Withdrawals</a>
+  <a href="login.html" onclick="logout()">🚪 Logout</a>
+</div>
+
+<div class="main-content">
+  <h2>User Management</h2>
+  <button class="refresh-btn" onclick="loadUsers()">🔄 Refresh</button>
+  <input type="text" class="search-box" id="search" placeholder="Search by name or email..." onkeyup="filterUsers()">
+  
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Full Name</th><th>Email</th><th>Balance</th><th>Invested?</th><th>Referral Code</th><th>Joined</th></tr>
+    </thead>
+    <tbody id="usersTableBody"><tr><td colspan="7">Loading...</td></tr></tbody>
+  </table>
+</div>
+
+<script>
+const token = localStorage.getItem('adminToken');
+if (!token) window.location.href = 'login.html';
+
+let allUsers = [];
+
+async function loadUsers() {
+  try {
+    const res = await fetch('/api/admin/users', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    allUsers = await res.json();
+    displayUsers(allUsers);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function displayUsers(users) {
+  const tbody = document.getElementById('usersTableBody');
+  if (users.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7">No users found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = users.map(u => `
+    <tr>
+      <td>${u.id}</td>
+      <td>${u.full_name}</td>
+      <td>${u.email}</td>
+      <td>₦${Number(u.balance || 0).toLocaleString()}</td>
+      <td>${u.has_invested ? '✅ Yes' : '❌ No'}</td>
+      <td>${u.referral_code || '-'}</td>
+      <td>${new Date(u.created_at).toLocaleDateString()}</td>
+    </tr>
+  `).join('');
+}
+
+function filterUsers() {
+  const search = document.getElementById('search').value.toLowerCase();
+  const filtered = allUsers.filter(u => 
+    u.full_name.toLowerCase().includes(search) || 
+    u.email.toLowerCase().includes(search)
+  );
+  displayUsers(filtered);
+}
+
+function logout() {
+  localStorage.removeItem('adminToken');
+  window.location.href = 'login.html';
+}
+
+loadUsers();
+setInterval(loadUsers, 30000);
+</script>
+</body>
+</html>

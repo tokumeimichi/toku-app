@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Invest - Toku Invest</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #f0f2f5; display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 240px; min-height: 100vh; background: linear-gradient(180deg, #0f0c29, #302b63); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; z-index: 100; }
+    .sidebar-logo { padding: 24px 20px 18px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+    .sidebar-logo h1 { color: #fff; font-size: 1.4rem; font-weight: 700; }
+    .sidebar-logo span { color: #48c6ef; }
+    .sidebar-logo p { color: rgba(255,255,255,0.45); font-size: 0.72rem; margin: 0; }
+    .sidebar-menu { padding: 16px 0; flex: 1; }
+    .menu-label { font-size: 0.68rem; color: rgba(255,255,255,0.35); text-transform: uppercase; letter-spacing: 0.1em; padding: 10px 20px 4px; }
+    .menu-item { display: flex; align-items: center; gap: 10px; padding: 11px 20px; color: rgba(255,255,255,0.65); font-size: 0.88rem; cursor: pointer; transition: all 0.2s; text-decoration: none; border-left: 3px solid transparent; }
+    .menu-item:hover { background: rgba(255,255,255,0.08); color: #fff; }
+    .menu-item.active { background: rgba(108,99,255,0.3); color: #fff; border-left: 3px solid #6c63ff; }
+    .menu-item .icon { font-size: 1rem; width: 20px; text-align: center; }
+    .sidebar-bottom { padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.1); }
+    .user-info { display: flex; align-items: center; gap: 10px; color: #fff; }
+    .user-avatar { width: 36px; height: 36px; background: linear-gradient(135deg, #6c63ff, #48c6ef); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.95rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 0.84rem; font-weight: 600; }
+    .user-role { font-size: 0.7rem; color: rgba(255,255,255,0.45); }
+
+    /* MAIN */
+    .main-content { margin-left: 240px; flex: 1; display: flex; flex-direction: column; }
+    .topbar { background: #fff; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 10px rgba(0,0,0,0.06); position: sticky; top: 0; z-index: 99; }
+    .topbar-left h2 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .topbar-left p { font-size: 0.78rem; color: #888; margin: 0; }
+    .logout-btn { padding: 7px 16px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; border: none; border-radius: 8px; font-size: 0.82rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; }
+    .page-body { padding: 24px 28px; }
+
+    /* PAGE HEADER */
+    .page-header { background: linear-gradient(135deg, #6c63ff, #48c6ef); border-radius: 16px; padding: 24px 28px; color: #fff; margin-bottom: 24px; }
+    .page-header h2 { font-size: 1.3rem; font-weight: 700; margin-bottom: 4px; }
+    .page-header p { font-size: 0.85rem; opacity: 0.85; margin: 0; }
+
+    /* PACKAGES GRID */
+    .packages-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 24px; }
+
+    .pkg-card {
+      background: #fff; border-radius: 18px;
+      padding: 28px 24px; text-align: center;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      transition: transform 0.2s, box-shadow 0.2s;
+      position: relative; overflow: hidden;
+      border: 2px solid transparent;
+    }
+    .pkg-card:hover { transform: translateY(-4px); box-shadow: 0 12px 30px rgba(108,99,255,0.15); border-color: #6c63ff; }
+    .pkg-card.popular { border-color: #6c63ff; }
+    .popular-tag { position: absolute; top: 14px; right: -22px; background: linear-gradient(135deg,#6c63ff,#48c6ef); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 4px 32px; transform: rotate(45deg); }
+
+    .pkg-icon { font-size: 2.2rem; margin-bottom: 12px; }
+    .pkg-name { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .pkg-price { font-size: 1.8rem; font-weight: 700; color: #6c63ff; margin-bottom: 16px; }
+    .pkg-price span { font-size: 0.9rem; font-weight: 500; color: #888; }
+
+    .pkg-details { list-style: none; padding: 0; margin: 0 0 20px; text-align: left; }
+    .pkg-details li { font-size: 0.82rem; color: #555; padding: 6px 0; border-bottom: 1px solid #f5f5f5; display: flex; align-items: center; gap: 8px; }
+    .pkg-details li:last-child { border-bottom: none; }
+    .pkg-details li .check { color: #22c55e; font-weight: 700; }
+
+    .btn-buy { width: 100%; padding: 11px; border: none; border-radius: 10px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; font-size: 0.9rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
+    .btn-buy:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-buy:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* CONFIRM POPUP */
+    .popup-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 999; align-items: center; justify-content: center; }
+    .popup-overlay.show { display: flex; }
+    .popup-box { background: #fff; border-radius: 20px; padding: 36px 32px; text-align: center; max-width: 380px; width: 90%; animation: popIn 0.3s ease; }
+    @keyframes popIn { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .popup-box .p-icon { font-size: 2.8rem; margin-bottom: 12px; }
+    .popup-box h3 { font-weight: 700; color: #1a1a2e; margin-bottom: 6px; font-size: 1.1rem; }
+    .popup-box p { color: #666; font-size: 0.86rem; margin-bottom: 6px; }
+    .popup-box .pkg-summary { background: #f5f5ff; border-radius: 12px; padding: 14px; margin: 14px 0; }
+    .popup-box .pkg-summary .ps-name { font-size: 1rem; font-weight: 700; color: #6c63ff; }
+    .popup-box .pkg-summary .ps-detail { font-size: 0.82rem; color: #555; margin-top: 4px; }
+    .popup-btns { display: flex; gap: 10px; margin-top: 18px; }
+    .btn-cancel { flex: 1; padding: 11px; border: 1.5px solid #e0e0e0; border-radius: 10px; background: #fff; color: #666; font-family: 'Poppins', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+    .btn-confirm { flex: 1; padding: 11px; border: none; border-radius: 10px; background: linear-gradient(135deg,#6c63ff,#48c6ef); color: #fff; font-family: 'Poppins', sans-serif; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+
+    /* ACTIVE NOTICE */
+    .active-notice { background: #f0fff4; border: 1.5px solid #c6f6d5; border-radius: 14px; padding: 16px 20px; margin-bottom: 20px; display: none; }
+    .active-notice h4 { color: #22c55e; font-size: 0.95rem; font-weight: 700; margin-bottom: 4px; }
+    .active-notice p { color: #555; font-size: 0.83rem; margin: 0; }
+
+    @media (max-width: 992px) { .packages-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (max-width: 768px) {
+      .sidebar { width: 0; overflow: hidden; }
+      .main-content { margin-left: 0; }
+      .packages-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Toku<span>.</span></h1>
+      <p>Investment Platform</p>
+    </div>
+    <div class="sidebar-menu">
+      <div class="menu-label">Menu</div>
+      <a class="menu-item" href="dashboard.html"><span class="icon">🏠</span> Dashboard</a>
+      <a class="menu-item active" href="invest.html"><span class="icon">📦</span> Invest</a>
+      <a class="menu-item" href="withdraw.html"><span class="icon">💸</span> Withdraw</a>
+      <a class="menu-item" href="referral.html"><span class="icon">🔗</span> Referrals</a>
+    </div>
+    <div class="sidebar-bottom">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebarAvatar">?</div>
+        <div>
+          <div class="user-name" id="sidebarName">Loading...</div>
+          <div class="user-role">Investor</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main-content">
+    <div class="topbar">
+      <div class="topbar-left">
+        <h2>Investment Packages</h2>
+        <p>Choose a plan and start earning daily</p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Log Out</button>
+    </div>
+
+    <div class="page-body">
+
+      <!-- Active package notice -->
+      <div class="active-notice" id="activeNotice">
+        <h4>✅ You have an active package!</h4>
+        <p id="activeNoticeText">You can buy a new package after your current one completes in 7 days.</p>
+      </div>
+
+      <div class="page-header">
+        <h2>📦 Choose Your Investment Plan</h2>
+        <p>Invest today and earn 20% daily returns for 7 days. Payments processed securely via Paystack.</p>
+      </div>
+
+      <!-- PACKAGES -->
+      <div class="packages-grid" id="packagesGrid">
+        <div style="text-align:center; color:#aaa; padding:40px; grid-column:1/-1;">Loading packages...</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CONFIRM POPUP -->
+  <div class="popup-overlay" id="confirmPopup">
+    <div class="popup-box">
+      <div class="p-icon">🛒</div>
+      <h3>Confirm Purchase</h3>
+      <p>You are about to buy this investment package:</p>
+      <div class="pkg-summary">
+        <div class="ps-name" id="popupPkgName">-</div>
+        <div class="ps-detail" id="popupPkgDetail">-</div>
+      </div>
+      <p style="font-size:0.8rem; color:#888;">You will be redirected to Paystack to complete payment securely.</p>
+      <div class="popup-btns">
+        <button class="btn-cancel" onclick="closeConfirm()">❌ Cancel</button>
+        <button class="btn-confirm" id="confirmBtn" onclick="proceedToPayment()">✅ Yes, Buy Now</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = 'login.html';
+
+    const headers = {
+      'Content-Type':  'application/json',
+      'Authorization': 'Bearer ' + token
+    };
+
+    const icons  = ['🌱','💼','⭐','💎','👑'];
+    let selectedPackageId = null;
+    let hasActive = false;
+
+    async function loadPage() {
+      // Load profile
+      const profRes = await fetch('/api/profile', { headers });
+      const profile = await profRes.json();
+
+      const name = profile.full_name || localStorage.getItem('userName');
+      document.getElementById('sidebarName').textContent   = name;
+      document.getElementById('sidebarAvatar').textContent = name.charAt(0).toUpperCase();
+
+      // Check active package
+      if (profile.inv_id) {
+        hasActive = true;
+        document.getElementById('activeNotice').style.display = 'block';
+        document.getElementById('activeNoticeText').textContent =
+          `Your ${profile.package_name} package is running. You have ${7 - profile.days_claimed} days left.`;
+      }
+
+      // Load packages
+      // --- Inside loadPage() function ---
+
+// 1. Fetch the data from the new route we just created
+const pkgRes = await fetch('/api/packages', { headers });
+const packages = await pkgRes.json();
+
+// 2. Find the grid in your HTML (id="packagesGrid")
+const grid = document.getElementById('packagesGrid');
+
+// 3. Map the data into the visual cards
+grid.innerHTML = packages.map((pkg, i) => `
+    <div class="pkg-card ${i === 1 ? 'popular' : ''}">
+        ${i === 1 ? '<div class="popular-tag">POPULAR</div>' : ''}
+        <div class="pkg-icon">${icons[i] || '💰'}</div>
+        <div class="pkg-name">${pkg.name} Plan</div>
+        <div class="pkg-price">N${Number(pkg.price).toLocaleString()}</div>
+        <ul class="pkg-details">
+            <li><span class="check"></span> N${Number(pkg.daily_return).toLocaleString()} Daily Return</li>
+            <li><span class="check"></span> ${pkg.duration_days} Days Duration</li>
+            <li><span class="check"></span> N${(Number(pkg.daily_return) * pkg.duration_days).toLocaleString()} Total Return</li>
+            <li><span class="check"></span> Instant Activation</li>
+        </ul>
+        <button class="btn-buy"
+            onclick="confirmBuy(${pkg.id}, '${pkg.name}', ${pkg.price}, ${pkg.daily_return})"
+            ${hasActive ? 'disabled' : ''}>
+            ${hasActive ? 'Package Active' : 'Buy Now →'}
+        </button>
+    </div>
+`).join('');
+    }
+
+    function confirmBuy(id, name, price, daily) {
+      selectedPackageId = id;
+      document.getElementById('popupPkgName').textContent   = name + ' Plan — ₦' + Number(price).toLocaleString();
+      document.getElementById('popupPkgDetail').textContent =
+        `₦${Number(daily).toLocaleString()} daily return × 7 days = ₦${Number(daily*7).toLocaleString()} total`;
+      document.getElementById('confirmPopup').classList.add('show');
+    }
+
+    function closeConfirm() {
+      document.getElementById('confirmPopup').classList.remove('show');
+      selectedPackageId = null;
+    }
+
+    async function proceedToPayment() {
+      const btn = document.getElementById('confirmBtn');
+      btn.textContent = 'Redirecting to Paystack...';
+      btn.disabled    = true;
+
+      try {
+        const res  = await fetch('/api/pay/initialize', {
+          method:  'POST',
+          headers,
+          body:    JSON.stringify({ package_id: selectedPackageId })
+        });
+        const data = await res.json();
+
+        if (res.ok) {
+          window.location.href = data.authorization_url;
+        } else {
+          alert('❌ ' + data.message);
+          btn.textContent = '✅ Yes, Buy Now';
+          btn.disabled    = false;
+        }
+      } catch(err) {
+        alert('❌ Cannot connect to server.');
+        btn.textContent = '✅ Yes, Buy Now';
+        btn.disabled    = false;
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      window.location.href = 'login.html';
+    }
+
+    loadPage();
+  </script>
+</body>
+</html>

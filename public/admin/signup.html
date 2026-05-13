@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign Up - Toku</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+    .signup-wrapper { width: 100%; max-width: 480px; }
+    .card { border: none; border-radius: 20px; background: #fff; box-shadow: 0 25px 60px rgba(0,0,0,0.4); overflow: hidden; }
+    .card-top-banner { background: linear-gradient(135deg, #6c63ff, #48c6ef); padding: 32px 40px 24px; text-align: center; color: #fff; }
+    .card-top-banner .avatar { width: 64px; height: 64px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 14px; }
+    .card-top-banner h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+    .card-top-banner p { font-size: 0.88rem; opacity: 0.85; margin: 0; }
+    .card-form { padding: 32px 36px 28px; }
+    .form-label { font-size: 0.82rem; font-weight: 600; color: #555; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .form-control { border-radius: 10px; border: 1.5px solid #e0e0e0; padding: 11px 14px; font-size: 0.95rem; font-family: 'Poppins', sans-serif; background: #fafafa; }
+    .form-control:focus { border-color: #6c63ff; box-shadow: 0 0 0 3px rgba(108,99,255,0.18); background: #fff; outline: none; }
+    .strength-row { display: flex; gap: 4px; margin-top: 7px; }
+    .strength-seg { flex: 1; height: 4px; border-radius: 4px; background: #e8e8e8; transition: background 0.3s; }
+    .strength-text { font-size: 0.75rem; color: #aaa; margin-top: 4px; }
+    .btn-signup { width: 100%; padding: 13px; border: none; border-radius: 10px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; font-size: 1rem; font-weight: 600; font-family: 'Poppins', sans-serif; cursor: pointer; margin-top: 8px; transition: opacity 0.2s, transform 0.15s; }
+    .btn-signup:hover { opacity: 0.9; transform: translateY(-1px); }
+    .divider { display: flex; align-items: center; gap: 10px; color: #ccc; font-size: 0.8rem; margin: 20px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: #ebebeb; }
+    .footer-link { text-align: center; margin-top: 18px; font-size: 0.88rem; color: #888; }
+    .footer-link a { color: #6c63ff; font-weight: 600; text-decoration: none; }
+    .alert-msg { padding: 10px 14px; border-radius: 10px; font-size: 0.88rem; margin-bottom: 16px; display: none; }
+    .alert-error { background: #fff0f0; color: #e53e3e; border: 1px solid #fed7d7; }
+    .alert-success { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+  </style>
+</head>
+<body>
+  <div class="signup-wrapper">
+    <div class="card">
+      <div class="card-top-banner">
+        <div class="avatar">👤</div>
+        <h2>Create Account</h2>
+        <p>Join Toku today — it's completely free!</p>
+      </div>
+      <div class="card-form">
+
+        <div class="alert-msg alert-error" id="errorMsg"></div>
+        <div class="alert-msg alert-success" id="successMsg"></div>
+
+        <form id="signupForm" novalidate>
+          <div class="mb-3">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-control" id="name" placeholder="e.g. John Doe" required/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email Address</label>
+            <input type="email" class="form-control" id="email" placeholder="john@example.com" required/>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" class="form-control" id="password" placeholder="Create a strong password" required/>
+            <div class="strength-row">
+              <div class="strength-seg" id="seg1"></div>
+              <div class="strength-seg" id="seg2"></div>
+              <div class="strength-seg" id="seg3"></div>
+              <div class="strength-seg" id="seg4"></div>
+            </div>
+            <div class="strength-text" id="strengthText">Enter a password</div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Confirm Password</label>
+            <input type="password" class="form-control" id="confirm" placeholder="Repeat your password" required/>
+          </div>
+          <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="terms" required/>
+            <label class="form-check-label" for="terms" style="font-size:0.83rem; color:#666;">
+              I agree to the <a href="#" style="color:#6c63ff;">Terms &amp; Conditions</a>
+            </label>
+          </div>
+          <button type="submit" class="btn-signup" id="submitBtn">🚀 &nbsp;Create My Account</button>
+        </form>
+
+        <div class="divider">already have an account?</div>
+        <div class="footer-link">
+          <a href="login.html">Log in here →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Password strength
+    const pw     = document.getElementById('password');
+    const segs   = [1,2,3,4].map(i => document.getElementById('seg'+i));
+    const txt    = document.getElementById('strengthText');
+    const colors = ['#ef4444','#f97316','#eab308','#22c55e'];
+    const labels = ['Weak','Fair','Good','Strong 💪'];
+
+    pw.addEventListener('input', () => {
+      const v = pw.value;
+      let score = 0;
+      if (v.length >= 8)          score++;
+      if (/[A-Z]/.test(v))        score++;
+      if (/[0-9]/.test(v))        score++;
+      if (/[^A-Za-z0-9]/.test(v)) score++;
+      segs.forEach((s, i) => {
+        s.style.background = (v.length > 0 && i < score) ? colors[score-1] : '#e8e8e8';
+      });
+      txt.textContent = v.length === 0 ? 'Enter a password' : labels[score-1];
+      txt.style.color = v.length === 0 ? '#aaa' : colors[score-1];
+    });
+
+    // Form submit
+    document.getElementById('signupForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const errorBox   = document.getElementById('errorMsg');
+      const successBox = document.getElementById('successMsg');
+      const submitBtn  = document.getElementById('submitBtn');
+
+      errorBox.style.display   = 'none';
+      successBox.style.display = 'none';
+
+      const name     = document.getElementById('name').value.trim();
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm  = document.getElementById('confirm').value;
+      const terms    = document.getElementById('terms').checked;
+
+      if (!name || !email || !password || !confirm) {
+        errorBox.textContent   = '⚠️ Please fill in all fields.';
+        errorBox.style.display = 'block';
+        return;
+      }
+      if (password !== confirm) {
+        errorBox.textContent   = '❌ Passwords do not match!';
+        errorBox.style.display = 'block';
+        return;
+      }
+      if (!terms) {
+        errorBox.textContent   = '⚠️ Please accept the Terms & Conditions.';
+        errorBox.style.display = 'block';
+        return;
+      }
+
+      submitBtn.textContent = 'Creating account...';
+      submitBtn.disabled    = true;
+
+      try {
+        const res  = await fetch('/api/signup', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ full_name: name, email, password })
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem('token',    data.token);
+          localStorage.setItem('userName', data.name);
+          successBox.textContent   = '✅ Account created! Redirecting...';
+          successBox.style.display = 'block';
+          setTimeout(() => window.location.href = 'dashboard.html', 1500);
+        } else {
+          errorBox.textContent   = '❌ ' + data.message;
+          errorBox.style.display = 'block';
+          submitBtn.textContent  = '🚀  Create My Account';
+          submitBtn.disabled     = false;
+        }
+      } catch (err) {
+        errorBox.textContent   = '❌ Cannot connect to server. Make sure Node.js is running.';
+        errorBox.style.display = 'block';
+        submitBtn.textContent  = '🚀  Create My Account';
+        submitBtn.disabled     = false;
+      }
+    });
+  </script>
+</body>
+</html>
