@@ -15,30 +15,43 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Database ─────────────────────────────────────
-// Database connection (works with local and Aiven cloud)
 let db;
+
 if (process.env.DATABASE_URL) {
-  // For cloud deployment (Aiven MySQL)
+  console.log('Connecting to Aiven MySQL...');
   db = mysql.createConnection({
-    uri: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false  // Required for Aiven
-    }
+    host: 'toku-1-aakhowil-ca6c.h.aivencloud.com',
+    port: 16228,
+    user: 'avnadmin',
+    password: 'AVNS_rHf09BdWnsIR45shbSE',
+    database: 'defaultdb',
+    ssl: { rejectUnauthorized: false },
+    connectTimeout: 10000
+  });
+  
+  db.connect((err) => {
+    if (err) console.error('❌ DB Error:', err.message);
+    else console.log('✅ Connected to Aiven MySQL Cloud');
   });
 } else {
-  // For local development
   db = mysql.createConnection({
-    host:     process.env.DB_HOST || 'localhost',
-    user:     process.env.DB_USER || 'root',
-    password: process.env.DB_PASSWORD || '',
+    host: process.env.DB_HOST || 'localhost',
+    user: process.env.DB_USER || 'root',
+    password: process.env.DB_PASSWORD || 'adinoyi12',
     database: process.env.DB_NAME || 'toku_app'
+  });
+  
+  db.connect((err) => {
+    if (err) console.error('❌ Local DB Error:', err.message);
+    else console.log('✅ Connected to Local MySQL');
   });
 }
 
-db.connect(err => {
-  if (err) console.error('❌ DB Error:', err.message);
-  else     console.log('✅ Connected to MySQL');
-});
+// Helper: generate referral code
+function generateCode(name) {
+  return name.replace(/\s+/g,'').substring(0,4).toUpperCase() +
+         Math.floor(1000 + Math.random() * 9000);
+}
 
 // Auth middleware
 function authMiddleware(req, res, next) {
@@ -70,6 +83,7 @@ app.post('/api/signup', async (req, res) => {
     const hashed  = await bcrypt.hash(password, 10);
     const refCode = generateCode(full_name);
     let referredBy = null;
+    
     if (referral_code) {
       const [refUser] = await db.promise().query(
         'SELECT id FROM users WHERE referral_code = ?', [referral_code]
@@ -81,7 +95,7 @@ app.post('/api/signup', async (req, res) => {
       'INSERT INTO users (full_name, email, password, referral_code, referred_by) VALUES (?,?,?,?,?)',
       [full_name, email, hashed, refCode, referredBy],
       (err, result) => {
-        if (err) return res.status(500).json({ message: 'Database error' });
+        if (err) return res.status(500).json({ message: 'Database error: ' + err.message });
         const token = jwt.sign(
           { id: result.insertId, name: full_name, email },
           process.env.JWT_SECRET,
@@ -116,8 +130,8 @@ app.post('/api/login', (req, res) => {
     res.json({
       message: 'Login successful',
       token,
-      name:          user.full_name,
-      balance:       user.balance,
+      name: user.full_name,
+      balance: user.balance,
       referral_code: user.referral_code
     });
   });
@@ -145,7 +159,6 @@ app.get('/api/profile', authMiddleware, (req, res) => {
   );
 });
 
-// Get all packages (single definition)
 app.get('/api/packages', (req, res) => {
   db.query('SELECT * FROM packages WHERE is_active = 1', (err, results) => {
     if (err) return res.status(500).json({ message: 'Error fetching packages' });
@@ -166,10 +179,9 @@ app.post('/api/pay/initialize', authMiddleware, (req, res) => {
     }
 
     const pkg = results[0];
-    const amount = pkg.price * 100; // Paystack uses kobo
+    const amount = pkg.price * 100;
     const ref = 'TOKU_' + Date.now() + '_' + req.user.id;
 
-    // Save pending transaction
     db.query(
       'INSERT INTO transactions (user_id, package_id, amount, paystack_ref) VALUES (?,?,?,?)',
       [req.user.id, package_id, pkg.price, ref],
@@ -179,12 +191,11 @@ app.post('/api/pay/initialize', authMiddleware, (req, res) => {
           return res.status(500).json({ message: 'Could not create transaction' });
         }
 
-        // Call Paystack API
         const params = JSON.stringify({
           email: req.user.email,
           amount: amount,
           reference: ref,
-          callback_url: `${process.env.APP_URL || 'http://localhost:3000'}/user/verify.html`  // ✅ Hardcoded for local testing
+          callback_url: `${process.env.APP_URL || 'https://toku-app.onrender.com'}/user/verify.html`
         });
 
         const options = {
@@ -205,10 +216,7 @@ app.post('/api/pay/initialize', authMiddleware, (req, res) => {
             try {
               const response = JSON.parse(data);
               if (response.status) {
-                res.json({ 
-                  authorization_url: response.data.authorization_url, 
-                  reference: ref 
-                });
+                res.json({ authorization_url: response.data.authorization_url, reference: ref });
               } else {
                 console.error('Paystack init error:', response);
                 res.status(500).json({ message: 'Paystack error: ' + response.message });
@@ -232,15 +240,14 @@ app.post('/api/pay/initialize', authMiddleware, (req, res) => {
   });
 });
 
-// Verify payment (called from verify.html)
 app.get('/api/pay/verify/:reference', authMiddleware, (req, res) => {
   const { reference } = req.params;
   const options = {
     hostname: 'api.paystack.co',
-    port:     443,
-    path:     `/transaction/verify/${reference}`,
-    method:   'GET',
-    headers:  { Authorization: `Bearer ${process.env.PAYSTACK_SECRET}` }
+    port: 443,
+    path: `/transaction/verify/${reference}`,
+    method: 'GET',
+    headers: { Authorization: `Bearer ${process.env.PAYSTACK_SECRET}` }
   };
 
   https.get(options, paystackRes => {
@@ -250,7 +257,6 @@ app.get('/api/pay/verify/:reference', authMiddleware, (req, res) => {
       try {
         const response = JSON.parse(data);
         if (response.status && response.data.status === 'success') {
-          // Get transaction
           db.query(
             'SELECT * FROM transactions WHERE paystack_ref = ? AND user_id = ?',
             [reference, req.user.id],
@@ -263,38 +269,23 @@ app.get('/api/pay/verify/:reference', authMiddleware, (req, res) => {
                 return res.json({ success: true, activated: true, message: 'Already activated' });
               }
 
-              // Mark transaction as successful
-              await db.promise().query(
-                'UPDATE transactions SET status = "success" WHERE paystack_ref = ?',
-                [reference]
-              );
-
-              // Get package details
-              const [pkgRows] = await db.promise().query(
-                'SELECT * FROM packages WHERE id = ?', [tx.package_id]
-              );
+              await db.promise().query('UPDATE transactions SET status = "success" WHERE paystack_ref = ?', [reference]);
+              const [pkgRows] = await db.promise().query('SELECT * FROM packages WHERE id = ?', [tx.package_id]);
               if (!pkgRows.length) throw new Error('Package not found');
               const pkg = pkgRows[0];
 
-              const today   = new Date();
+              const today = new Date();
               const endDate = new Date();
               endDate.setDate(today.getDate() + pkg.duration_days);
 
-              // Create investment
               await db.promise().query(
-                `INSERT INTO investments 
-                 (user_id, package_id, amount, daily_return, start_date, end_date, days_claimed, last_claim_date)
+                `INSERT INTO investments (user_id, package_id, amount, daily_return, start_date, end_date, days_claimed, last_claim_date)
                  VALUES (?, ?, ?, ?, ?, ?, 0, NULL)`,
                 [req.user.id, tx.package_id, tx.amount, pkg.daily_return, today, endDate]
               );
 
-              // Mark user as invested (for referral)
-              await db.promise().query(
-                'UPDATE users SET has_invested = 1 WHERE id = ?',
-                [req.user.id]
-              );
+              await db.promise().query('UPDATE users SET has_invested = 1 WHERE id = ?', [req.user.id]);
 
-              // Handle referral bonus (only once per referred user)
               const [refRows] = await db.promise().query(
                 `SELECT referred_by FROM users WHERE id = ? AND has_invested = 1 AND referred_by IS NOT NULL`,
                 [req.user.id]
@@ -302,19 +293,13 @@ app.get('/api/pay/verify/:reference', authMiddleware, (req, res) => {
               if (refRows.length > 0 && refRows[0].referred_by) {
                 const referrerId = refRows[0].referred_by;
                 const bonus = tx.amount * 0.10;
-                // Check if bonus already paid
-                const [existing] = await db.promise().query(
-                  'SELECT id FROM referrals WHERE referred_id = ?', [req.user.id]
-                );
+                const [existing] = await db.promise().query('SELECT id FROM referrals WHERE referred_id = ?', [req.user.id]);
                 if (existing.length === 0) {
                   await db.promise().query(
                     'INSERT INTO referrals (referrer_id, referred_id, package_price, bonus_amount) VALUES (?,?,?,?)',
                     [referrerId, req.user.id, tx.amount, bonus]
                   );
-                  await db.promise().query(
-                    'UPDATE users SET balance = balance + ? WHERE id = ?',
-                    [bonus, referrerId]
-                  );
+                  await db.promise().query('UPDATE users SET balance = balance + ? WHERE id = ?', [bonus, referrerId]);
                 }
               }
 
@@ -322,10 +307,7 @@ app.get('/api/pay/verify/:reference', authMiddleware, (req, res) => {
             }
           );
         } else {
-          await db.promise().query(
-            'UPDATE transactions SET status = "failed" WHERE paystack_ref = ?',
-            [reference]
-          );
+          await db.promise().query('UPDATE transactions SET status = "failed" WHERE paystack_ref = ?', [reference]);
           res.status(400).json({ success: false, message: 'Payment not successful' });
         }
       } catch (err) {
@@ -337,13 +319,12 @@ app.get('/api/pay/verify/:reference', authMiddleware, (req, res) => {
 });
 
 // ════════════════════════════════════════════════
-//  DAILY CLAIM (FIXED)
+//  DAILY CLAIM
 // ════════════════════════════════════════════════
 
 app.post('/api/claim', authMiddleware, async (req, res) => {
   const userId = req.user.id;
   try {
-    // Get active investment (only one active allowed)
     const [invRows] = await db.promise().query(
       `SELECT * FROM investments 
        WHERE user_id = ? AND status = 'active' AND days_claimed < (SELECT duration_days FROM packages WHERE id = package_id)`,
@@ -357,46 +338,21 @@ app.post('/api/claim', authMiddleware, async (req, res) => {
     const now = new Date();
     const lastClaim = inv.last_claim_date ? new Date(inv.last_claim_date) : new Date(inv.start_date);
     const hoursSince = (now - lastClaim) / (1000 * 3600);
-    if (hoursSince < 23.5) { // Allow 30 mins grace
+    if (hoursSince < 23.5) {
       return res.status(400).json({ message: 'Already claimed within 24 hours. Come back later.' });
     }
 
     const amount = inv.daily_return;
     const newDaysClaimed = inv.days_claimed + 1;
-    const isCompleted = newDaysClaimed >= (await getDurationDays(inv.package_id));
+    const isCompleted = newDaysClaimed >= 7;
 
-    // Begin transaction
     await db.promise().query('START TRANSACTION');
-
-    // Insert claim record
-    await db.promise().query(
-      'INSERT INTO claims (user_id, investment_id, amount, claim_date) VALUES (?, ?, ?, NOW())',
-      [userId, inv.id, amount]
-    );
-
-    // Update investment
-    await db.promise().query(
-      `UPDATE investments SET 
-        days_claimed = ?, 
-        last_claim_date = NOW(), 
-        status = ? 
-       WHERE id = ?`,
-      [newDaysClaimed, isCompleted ? 'completed' : 'active', inv.id]
-    );
-
-    // Add to user balance
-    await db.promise().query(
-      'UPDATE users SET balance = balance + ? WHERE id = ?',
-      [amount, userId]
-    );
-
+    await db.promise().query('INSERT INTO claims (user_id, investment_id, amount, claim_date) VALUES (?, ?, ?, NOW())', [userId, inv.id, amount]);
+    await db.promise().query(`UPDATE investments SET days_claimed = ?, last_claim_date = NOW(), status = ? WHERE id = ?`, [newDaysClaimed, isCompleted ? 'completed' : 'active', inv.id]);
+    await db.promise().query('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, userId]);
     await db.promise().query('COMMIT');
 
-    res.json({
-      message: `✅ ₦${amount} claimed successfully!`,
-      amount,
-      days_remaining: isCompleted ? 0 : (await getDurationDays(inv.package_id)) - newDaysClaimed
-    });
+    res.json({ message: `✅ ₦${amount} claimed successfully!`, amount, days_remaining: isCompleted ? 0 : 7 - newDaysClaimed });
   } catch (err) {
     await db.promise().query('ROLLBACK');
     console.error(err);
@@ -404,41 +360,21 @@ app.post('/api/claim', authMiddleware, async (req, res) => {
   }
 });
 
-// Helper for package duration
-async function getDurationDays(packageId) {
-  const [rows] = await db.promise().query('SELECT duration_days FROM packages WHERE id = ?', [packageId]);
-  return rows[0]?.duration_days || 7;
-}
-
-// Claim status endpoint (used by dashboard timer)
 app.get('/api/user/claim-status', authMiddleware, async (req, res) => {
   const userId = req.user.id;
   try {
     const [invRows] = await db.promise().query(
-      `SELECT i.*, p.duration_days 
-       FROM investments i 
-       JOIN packages p ON i.package_id = p.id 
-       WHERE i.user_id = ? AND i.status = 'active'`,
+      `SELECT i.*, p.duration_days FROM investments i JOIN packages p ON i.package_id = p.id WHERE i.user_id = ? AND i.status = 'active'`,
       [userId]
     );
-    if (invRows.length === 0) {
-      return res.json({ active: false });
-    }
+    if (invRows.length === 0) return res.json({ active: false });
     const inv = invRows[0];
     const startDate = new Date(inv.last_claim_date || inv.start_date);
     const now = new Date();
     const nextClaimTime = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
     const countdown = Math.max(0, nextClaimTime - now);
     const canClaimNow = countdown === 0 ? 1 : 0;
-    const pendingAmount = canClaimNow ? inv.daily_return : 0;
-
-    res.json({
-      active: true,
-      canClaimNow,
-      earningsPerPeriod: inv.daily_return,
-      countdown,
-      pendingAmount
-    });
+    res.json({ active: true, canClaimNow, earningsPerPeriod: inv.daily_return, countdown, pendingAmount: canClaimNow ? inv.daily_return : 0 });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Server error' });
@@ -451,37 +387,26 @@ app.get('/api/user/claim-status', authMiddleware, async (req, res) => {
 
 app.post('/api/withdraw', authMiddleware, (req, res) => {
   const { amount, bank_name, account_no, account_name } = req.body;
-  if (!amount || !bank_name || !account_no || !account_name)
-    return res.status(400).json({ message: 'All fields are required' });
-  if (amount < 500)
-    return res.status(400).json({ message: 'Minimum withdrawal is ₦500' });
+  if (!amount || !bank_name || !account_no || !account_name) return res.status(400).json({ message: 'All fields are required' });
+  if (amount < 500) return res.status(400).json({ message: 'Minimum withdrawal is ₦500' });
 
   db.query('SELECT balance FROM users WHERE id = ?', [req.user.id], (err, results) => {
     if (err) return res.status(500).json({ message: 'Database error' });
     const balance = results[0].balance;
-    if (balance < amount)
-      return res.status(400).json({ message: 'Insufficient balance' });
+    if (balance < amount) return res.status(400).json({ message: 'Insufficient balance' });
 
     db.query('UPDATE users SET balance = balance - ? WHERE id = ?', [amount, req.user.id], (err) => {
       if (err) return res.status(500).json({ message: 'Update failed' });
-      db.query(
-        'INSERT INTO withdrawals (user_id, amount, bank_name, account_no, account_name) VALUES (?,?,?,?,?)',
-        [req.user.id, amount, bank_name, account_no, account_name],
-        (err) => {
-          if (err) return res.status(500).json({ message: 'Withdrawal request failed' });
-          res.json({ message: 'Withdrawal request submitted! We will process it shortly.' });
-        }
-      );
+      db.query('INSERT INTO withdrawals (user_id, amount, bank_name, account_no, account_name) VALUES (?,?,?,?,?)', [req.user.id, amount, bank_name, account_no, account_name], (err) => {
+        if (err) return res.status(500).json({ message: 'Withdrawal request failed' });
+        res.json({ message: 'Withdrawal request submitted! We will process it shortly.' });
+      });
     });
   });
 });
 
 app.get('/api/withdrawals', authMiddleware, (req, res) => {
-  db.query(
-    'SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC',
-    [req.user.id],
-    (err, results) => res.json(results)
-  );
+  db.query('SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC', [req.user.id], (err, results) => res.json(results));
 });
 
 // ════════════════════════════════════════════════
@@ -489,28 +414,11 @@ app.get('/api/withdrawals', authMiddleware, (req, res) => {
 // ════════════════════════════════════════════════
 
 app.get('/api/referrals', authMiddleware, (req, res) => {
-  db.query(
-    `SELECT r.*, u.full_name as referred_name, u.email as referred_email
-     FROM referrals r
-     JOIN users u ON u.id = r.referred_id
-     WHERE r.referrer_id = ?
-     ORDER BY r.created_at DESC`,
-    [req.user.id],
-    (err, results) => res.json(results)
-  );
+  db.query(`SELECT r.*, u.full_name as referred_name, u.email as referred_email FROM referrals r JOIN users u ON u.id = r.referred_id WHERE r.referrer_id = ? ORDER BY r.created_at DESC`, [req.user.id], (err, results) => res.json(results));
 });
 
 app.get('/api/claims', authMiddleware, (req, res) => {
-  db.query(
-    `SELECT c.*, p.name as package_name
-     FROM claims c
-     JOIN investments i ON i.id = c.investment_id
-     JOIN packages p ON p.id = i.package_id
-     WHERE c.user_id = ?
-     ORDER BY c.created_at DESC`,
-    [req.user.id],
-    (err, results) => res.json(results)
-  );
+  db.query(`SELECT c.*, p.name as package_name FROM claims c JOIN investments i ON i.id = c.investment_id JOIN packages p ON p.id = i.package_id WHERE c.user_id = ? ORDER BY c.created_at DESC`, [req.user.id], (err, results) => res.json(results));
 });
 
 app.get('/api/stats', authMiddleware, (req, res) => {
@@ -522,49 +430,30 @@ app.get('/api/stats', authMiddleware, (req, res) => {
     db.promise().query('SELECT SUM(bonus_amount) as total FROM referrals WHERE referrer_id = ?', [uid]),
   ]).then(([inv, claims, withdrawals, referrals]) => {
     res.json({
-      total_invested:  inv[0][0].total        || 0,
-      total_earned:    claims[0][0].total      || 0,
+      total_invested: inv[0][0].total || 0,
+      total_earned: claims[0][0].total || 0,
       total_withdrawn: withdrawals[0][0].total || 0,
-      referral_earned: referrals[0][0].total   || 0,
+      referral_earned: referrals[0][0].total || 0,
     });
   }).catch(err => res.status(500).json({ error: 'Stats error' }));
 });
 
 // ════════════════════════════════════════════════
-//  ADMIN ROUTES (simplified – keep your existing)
+//  ADMIN ROUTES
 // ════════════════════════════════════════════════
 
-// ════════════════════════════════════════════════
-//  ADMIN ROUTES (FULLY CORRECTED)
-// ════════════════════════════════════════════════
-
-// Admin Login
 app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
-  
   db.query('SELECT * FROM users WHERE email = ? AND is_admin = 1', [email], async (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(401).json({ message: 'Invalid admin credentials' });
-    }
-    
+    if (err || results.length === 0) return res.status(401).json({ message: 'Invalid admin credentials' });
     const admin = results[0];
     const match = await bcrypt.compare(password, admin.password);
-    
-    if (!match) {
-      return res.status(401).json({ message: 'Invalid admin credentials' });
-    }
-    
-    const token = jwt.sign(
-      { id: admin.id, name: admin.full_name, email: admin.email, isAdmin: true },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-    
+    if (!match) return res.status(401).json({ message: 'Invalid admin credentials' });
+    const token = jwt.sign({ id: admin.id, name: admin.full_name, email: admin.email, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: '1d' });
     res.json({ message: 'Admin login successful', token, isAdmin: true });
   });
 });
 
-// Admin Overview Dashboard Stats
 app.get('/api/admin/overview', (req, res) => {
   Promise.all([
     db.promise().query('SELECT COUNT(*) as total FROM users'),
@@ -578,40 +467,21 @@ app.get('/api/admin/overview', (req, res) => {
       total_revenue: revenue[0][0].total || 0,
       pending_withdrawals: pending[0][0].total || 0,
     });
-  }).catch(err => {
-    console.error('Admin overview error:', err);
-    res.status(500).json({ error: 'Failed to load dashboard data' });
+  }).catch(err => res.status(500).json({ error: 'Failed to load dashboard data' }));
+});
+
+app.get('/api/admin/withdrawals', (req, res) => {
+  db.query(`SELECT w.*, u.full_name, u.email FROM withdrawals w JOIN users u ON u.id = w.user_id ORDER BY w.created_at DESC`, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch withdrawals' });
+    res.json(results);
   });
 });
 
-// Get all withdrawals (for admin)
-app.get('/api/admin/withdrawals', (req, res) => {
-  db.query(
-    `SELECT w.*, u.full_name, u.email FROM withdrawals w
-     JOIN users u ON u.id = w.user_id
-     ORDER BY w.created_at DESC`,
-    (err, results) => {
-      if (err) {
-        console.error('Withdrawals error:', err);
-        return res.status(500).json({ error: 'Failed to fetch withdrawals' });
-      }
-      res.json(results);
-    }
-  );
-});
-
-// Update withdrawal status (approve/reject)
 app.post('/api/admin/withdrawals/:id', (req, res) => {
   const { status } = req.body;
   const withdrawalId = req.params.id;
-  
   db.query('UPDATE withdrawals SET status = ? WHERE id = ?', [status, withdrawalId], (err) => {
-    if (err) {
-      console.error('Update error:', err);
-      return res.status(500).json({ message: 'Update failed' });
-    }
-    
-    // If rejected, refund the user
+    if (err) return res.status(500).json({ message: 'Update failed' });
     if (status === 'rejected') {
       db.query('SELECT user_id, amount FROM withdrawals WHERE id = ?', [withdrawalId], (err, results) => {
         if (!err && results.length > 0) {
@@ -619,75 +489,24 @@ app.post('/api/admin/withdrawals/:id', (req, res) => {
         }
       });
     }
-    
     res.json({ message: `Withdrawal ${status}` });
   });
 });
 
-// Get all investments (for admin)
 app.get('/api/admin/investments', (req, res) => {
-  db.query(
-    `SELECT i.*, u.full_name, u.email, p.name as package_name, p.duration_days
-     FROM investments i
-     JOIN users u ON u.id = i.user_id
-     JOIN packages p ON p.id = i.package_id
-     ORDER BY i.created_at DESC`,
-    (err, results) => {
-      if (err) {
-        console.error('Investments error:', err);
-        return res.status(500).json({ error: 'Failed to fetch investments' });
-      }
-      res.json(results);
-    }
-  );
-});
-
-// Get all users (for admin)
-app.get('/api/admin/users', (req, res) => {
-  db.query(
-    `SELECT id, full_name, email, balance, has_invested, referral_code, created_at, is_admin
-     FROM users 
-     ORDER BY created_at DESC`,
-    (err, results) => {
-      if (err) {
-        console.error('Users error:', err);
-        return res.status(500).json({ error: 'Failed to fetch users' });
-      }
-      res.json(results);
-    }
-  );
-});
-
-//------------------
-// Admin
-//------------------
-
-
-// Admin Login
-app.post('/api/admin/login', async (req, res) => {
-  const { email, password } = req.body;
-  
-  db.query('SELECT * FROM users WHERE email = ? AND is_admin = 1', [email], async (err, results) => {
-    if (err || results.length === 0) {
-      return res.status(401).json({ message: 'Invalid admin credentials' });
-    }
-    
-    const admin = results[0];
-    const match = await bcrypt.compare(password, admin.password);
-    
-    if (!match) {
-      return res.status(401).json({ message: 'Invalid admin credentials' });
-    }
-    
-    const token = jwt.sign(
-      { id: admin.id, name: admin.full_name, email: admin.email, isAdmin: true },
-      process.env.JWT_SECRET,
-      { expiresIn: '1d' }
-    );
-    
-    res.json({ message: 'Admin login successful', token, isAdmin: true });
+  db.query(`SELECT i.*, u.full_name, u.email, p.name as package_name, p.duration_days FROM investments i JOIN users u ON u.id = i.user_id JOIN packages p ON p.id = i.package_id ORDER BY i.created_at DESC`, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch investments' });
+    res.json(results);
   });
 });
+
+app.get('/api/admin/users', (req, res) => {
+  db.query(`SELECT id, full_name, email, balance, has_invested, referral_code, created_at, is_admin FROM users ORDER BY created_at DESC`, (err, results) => {
+    if (err) return res.status(500).json({ error: 'Failed to fetch users' });
+    res.json(results);
+  });
+});
+
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
