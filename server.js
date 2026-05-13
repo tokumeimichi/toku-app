@@ -15,11 +15,16 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Database ─────────────────────────────────────
-// Database connection (works with both local and cloud)
+// Database connection (works with local and Aiven cloud)
 let db;
 if (process.env.DATABASE_URL) {
-  // For cloud deployment (TiDB Cloud)
-  db = mysql.createConnection(process.env.DATABASE_URL);
+  // For cloud deployment (Aiven MySQL)
+  db = mysql.createConnection({
+    uri: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false  // Required for Aiven
+    }
+  });
 } else {
   // For local development
   db = mysql.createConnection({
@@ -34,12 +39,6 @@ db.connect(err => {
   if (err) console.error('❌ DB Error:', err.message);
   else     console.log('✅ Connected to MySQL');
 });
-
-// Helper: generate referral code
-function generateCode(name) {
-  return name.replace(/\s+/g,'').substring(0,4).toUpperCase() +
-         Math.floor(1000 + Math.random() * 9000);
-}
 
 // Auth middleware
 function authMiddleware(req, res, next) {
