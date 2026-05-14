@@ -539,6 +539,20 @@ app.get('/api/test-db', (req, res) => {
 
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
+
+// Temporary setup endpoint - REMOVE AFTER RUNNING ONCE
+app.get('/api/setup-admin', async (req, res) => {
+  try {
+    const [result] = await db.promise().query(`
+      INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
+      VALUES ('Admin User', 'admin@toku.com', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm', 'ADMIN1234', 1, 0)
+      ON DUPLICATE KEY UPDATE is_admin = 1
+    `);
+    res.json({ success: true, message: 'Admin user ready! Login at /admin/login.html' });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
 app.listen(PORT, () => {
   console.log(`🚀 Server running at http://localhost:${PORT}`);
 });
