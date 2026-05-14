@@ -231,7 +231,7 @@ app.post('/api/pay/initialize', authMiddleware, (req, res) => {
           email: req.user.email,
           amount: amount,
           reference: ref,
-          callback_url: `${process.env.APP_URL || 'https://toku-app.onrender.com'}/user/verify.html`
+          callback_url: 'https://toku.abrdns.com/user/verify.html'
         });
 
         const options = {

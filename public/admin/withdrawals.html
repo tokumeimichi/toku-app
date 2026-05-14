@@ -2,54 +2,214 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Withdrawals - Admin | Toku</title>
+  
+  <!-- Google Search Console Verification -->
+  <meta name="google-site-verification" content="F4zYhNYuP3p8fWRNJbnon03yBPyZe8yAyWq9gakEwnk" />
+  
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Poppins', sans-serif; background: #f0f2f5; }
-    .sidebar { width: 260px; background: linear-gradient(180deg, #0f0c29, #302b63); min-height: 100vh; position: fixed; }
-    .sidebar h3 { color: #fff; padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .sidebar a { display: block; color: rgba(255,255,255,0.7); padding: 12px 20px; text-decoration: none; }
+    
+    /* Sidebar - Desktop */
+    .sidebar {
+      width: 260px;
+      background: linear-gradient(180deg, #0f0c29, #302b63);
+      min-height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 1000;
+      transition: transform 0.3s ease;
+    }
+    .sidebar h3 { color: #fff; padding: 24px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); margin: 0; }
+    .sidebar a { display: block; color: rgba(255,255,255,0.7); padding: 12px 20px; text-decoration: none; transition: 0.2s; }
     .sidebar a:hover, .sidebar a.active { background: rgba(108,99,255,0.3); color: #fff; }
-    .main-content { margin-left: 260px; padding: 20px; }
-    table { width: 100%; background: #fff; border-radius: 12px; overflow: hidden; }
-    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-    .btn-approve { background: #22c55e; color: #fff; border: none; padding: 5px 12px; border-radius: 5px; margin-right: 5px; cursor: pointer; }
-    .btn-reject { background: #ef4444; color: #fff; border: none; padding: 5px 12px; border-radius: 5px; cursor: pointer; }
-    .badge-pending { background: #f59e0b; color: #fff; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; }
-    .badge-approved { background: #22c55e; }
-    .badge-rejected { background: #ef4444; }
-    .refresh-btn { background: #6c63ff; color: #fff; border: none; padding: 8px 20px; border-radius: 8px; margin-bottom: 20px; cursor: pointer; }
+    
+    /* Hamburger Menu Button (mobile only) */
+    .menu-toggle {
+      display: none;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      border: none;
+      border-radius: 50%;
+      width: 55px;
+      height: 55px;
+      font-size: 26px;
+      color: white;
+      z-index: 1100;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .menu-toggle:active { transform: scale(0.95); }
+    
+    /* Main Content */
+    .main-content {
+      margin-left: 260px;
+      padding: 20px;
+      transition: margin 0.3s;
+      min-height: 100vh;
+    }
+    
+    /* Header */
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .header-row h2 {
+      margin: 0;
+    }
+    .refresh-btn {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    
+    /* Table Container - Horizontal Scroll on Mobile */
+    .table-container {
+      overflow-x: auto;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    table {
+      width: 100%;
+      min-width: 1000px;
+      border-collapse: collapse;
+    }
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid #eee;
+    }
+    th {
+      background: #f8f9fa;
+      font-weight: 600;
+      color: #1a1a2e;
+    }
+    .btn-approve {
+      background: #22c55e;
+      color: #fff;
+      border: none;
+      padding: 6px 15px;
+      border-radius: 6px;
+      margin-right: 5px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-reject {
+      background: #ef4444;
+      color: #fff;
+      border: none;
+      padding: 6px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .badge-pending {
+      background: #f59e0b;
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      display: inline-block;
+    }
+    .badge-approved {
+      background: #22c55e;
+    }
+    .badge-rejected {
+      background: #ef4444;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+        width: 260px;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .main-content {
+        margin-left: 0;
+        padding: 15px;
+      }
+      .menu-toggle {
+        display: block;
+      }
+      .header-row h2 {
+        font-size: 1.3rem;
+      }
+      .refresh-btn {
+        width: 100%;
+      }
+    }
+    @media (min-width: 769px) {
+      .menu-toggle { display: none; }
+    }
   </style>
 </head>
 <body>
 
-<div class="sidebar">
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
   <h3>Toku Admin</h3>
   <a href="dashboard.html">📊 Dashboard</a>
   <a href="users.html">👥 Users</a>
   <a href="investments.html">💰 Investments</a>
   <a href="withdrawals.html" class="active">💸 Withdrawals</a>
-  <a href="login.html" onclick="logout()">🚪 Logout</a>
+  <a href="#" onclick="logout()">🚪 Logout</a>
 </div>
 
+<!-- Mobile Menu Toggle -->
+<button class="menu-toggle" id="menuToggle">☰</button>
+
 <div class="main-content">
-  <h2>Withdrawal Requests</h2>
-  <button class="refresh-btn" onclick="loadWithdrawals()">🔄 Refresh</button>
+  <div class="header-row">
+    <h2>Withdrawal Requests</h2>
+    <button class="refresh-btn" onclick="loadWithdrawals()">🔄 Refresh</button>
+  </div>
   
-  <table>
-    <thead>
-      <tr><th>ID</th><th>User</th><th>Email</th><th>Amount</th><th>Bank</th><th>Account No</th><th>Account Name</th><th>Status</th><th>Date</th><th>Action</th></tr>
-    </thead>
-    <tbody id="withdrawalsTableBody"><tr><td colspan="10">Loading...</td></tr></tbody>
-  </table>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th><th>User</th><th>Email</th><th>Amount</th><th>Bank</th><th>Account No</th><th>Account Name</th><th>Status</th><th>Date</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="withdrawalsTableBody">
+        <tr><td colspan="10" style="text-align:center;">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
 const token = localStorage.getItem('adminToken');
 if (!token) window.location.href = 'login.html';
+
+// Sidebar toggle for mobile
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+menuToggle?.addEventListener('click', () => sidebar.classList.toggle('open'));
+document.addEventListener('click', (e) => {
+  if (window.innerWidth <= 768 && sidebar.classList.contains('open') && !sidebar.contains(e.target) && e.target !== menuToggle) {
+    sidebar.classList.remove('open');
+  }
+});
 
 async function loadWithdrawals() {
   try {
@@ -59,8 +219,8 @@ async function loadWithdrawals() {
     const withdrawals = await res.json();
     
     const tbody = document.getElementById('withdrawalsTableBody');
-    if (withdrawals.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="10">No withdrawal requests</td></tr>';
+    if (!withdrawals.length) {
+      tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No withdrawal requests</td></tr>';
       return;
     }
     
@@ -80,11 +240,12 @@ async function loadWithdrawals() {
             <button onclick="updateWithdrawal(${w.id}, 'approved')" class="btn-approve">Approve</button>
             <button onclick="updateWithdrawal(${w.id}, 'rejected')" class="btn-reject">Reject</button>
           ` : '—'}
-        </td>
+         </td>
       </tr>
     `).join('');
   } catch (err) {
     console.error(err);
+    document.getElementById('withdrawalsTableBody').innerHTML = '<tr><td colspan="10" style="text-align:center;">Error loading withdrawals</td></tr>';
   }
 }
 

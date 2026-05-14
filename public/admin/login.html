@@ -2,16 +2,83 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
   <title>Admin Login - Toku</title>
+  
+  <!-- Google Search Console Verification (CORRECT ONE) -->
+  <meta name="google-site-verification" content="F4zYhNYuP3p8fWRNJbnon03yBPyZe8yAyWq9gakEwnk" />
+  
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
-    .login-box { background: #fff; padding: 40px; border-radius: 20px; width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); text-align: center; }
-    .login-box h2 { color: #1a1a2e; margin-bottom: 20px; }
-    .login-box input { width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; font-family: 'Poppins', sans-serif; }
-    .login-box button { width: 100%; padding: 12px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: #fff; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
-    .error { color: #ef4444; margin-top: 10px; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0f0c29, #302b63);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 20px;
+    }
+    .login-box {
+      background: #fff;
+      padding: 40px;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+    .login-box h2 {
+      color: #1a1a2e;
+      margin-bottom: 20px;
+      font-weight: 700;
+    }
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .login-box input:focus {
+      outline: none;
+      border-color: #6c63ff;
+    }
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: opacity 0.2s;
+    }
+    .login-box button:hover {
+      opacity: 0.9;
+    }
+    .error {
+      color: #ef4444;
+      margin-top: 10px;
+      font-size: 0.85rem;
+    }
+    
+    /* Responsive */
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 30px 25px;
+      }
+      .login-box h2 {
+        font-size: 1.4rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -27,8 +94,12 @@
 async function login() {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
+  const errorMsg = document.getElementById('errorMsg');
+  const loginBtn = document.querySelector('button');
   
-  console.log('Logging in with:', email, password);
+  errorMsg.innerText = '';
+  loginBtn.textContent = 'Logging in...';
+  loginBtn.disabled = true;
   
   try {
     const res = await fetch('/api/admin/login', {
@@ -38,17 +109,20 @@ async function login() {
     });
     
     const data = await res.json();
-    console.log('Response:', data);
     
     if (res.ok && data.isAdmin) {
       localStorage.setItem('adminToken', data.token);
       window.location.href = 'dashboard.html';
     } else {
-      document.getElementById('errorMsg').innerText = data.message || 'Invalid admin credentials';
+      errorMsg.innerText = data.message || 'Invalid admin credentials';
+      loginBtn.textContent = 'Login to Admin Panel';
+      loginBtn.disabled = false;
     }
   } catch (err) {
     console.error('Login error:', err);
-    document.getElementById('errorMsg').innerText = 'Connection error';
+    errorMsg.innerText = 'Connection error. Please try again.';
+    loginBtn.textContent = 'Login to Admin Panel';
+    loginBtn.disabled = false;
   }
 }
 </script>

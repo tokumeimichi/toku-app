@@ -2,15 +2,28 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Verifying Payment | Toku</title>
+    
+    <!-- Google Search Console Verification -->
+    <meta name="google-site-verification" content="F4zYhNYuP3p8fWRNJbnon03yBPyZe8yAyWq9gakEwnk" />
+    
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63); color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
-        .container { background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); max-width: 400px; width: 90%; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63); color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; text-align: center; padding: 20px; }
+        .container { background: rgba(255,255,255,0.05); padding: 2rem; border-radius: 15px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); max-width: 400px; width: 90%; backdrop-filter: blur(10px); }
         .loader { border: 4px solid rgba(255,255,255,0.1); border-top: 4px solid #6c63ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .btn { display: none; margin-top: 20px; padding: 10px 25px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: white; text-decoration: none; border-radius: 25px; font-weight: 600; }
+        .btn { display: none; margin-top: 20px; padding: 10px 25px; background: linear-gradient(135deg, #6c63ff, #48c6ef); color: white; text-decoration: none; border-radius: 25px; font-weight: 600; border: none; cursor: pointer; }
+        .btn:hover { opacity: 0.9; transform: translateY(-1px); transition: all 0.2s; }
+        .status-success { color: #22c55e; }
+        .status-error { color: #ef4444; }
+        @media (max-width: 480px) {
+            .container { padding: 1.5rem; }
+            h2 { font-size: 1.2rem; }
+            p { font-size: 0.85rem; }
+        }
     </style>
 </head>
 <body>
@@ -20,6 +33,7 @@
     <p id="message">Please do not close this window or refresh.</p>
     <a href="dashboard.html" id="homeBtn" class="btn">Go to Dashboard</a>
 </div>
+
 <script>
 async function verifyPayment() {
     const urlParams = new URLSearchParams(window.location.search);
@@ -29,6 +43,16 @@ async function verifyPayment() {
     const msgEl = document.getElementById('message');
     const loader = document.getElementById('loader');
     const homeBtn = document.getElementById('homeBtn');
+
+    // Check for token first
+    if (!token) {
+        statusEl.innerText = "Session Expired";
+        msgEl.innerText = "Please log in again to complete verification.";
+        loader.style.display = 'none';
+        homeBtn.style.display = 'inline-block';
+        homeBtn.href = 'login.html';
+        return;
+    }
 
     if (!reference) {
         statusEl.innerText = "Error";
@@ -41,29 +65,46 @@ async function verifyPayment() {
     try {
         const res = await fetch(`/api/pay/verify/${reference}`, {
             method: 'GET',
-            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            }
         });
+        
         const data = await res.json();
 
         loader.style.display = 'none';
         homeBtn.style.display = 'inline-block';
 
         if (res.ok && data.success === true) {
-            statusEl.innerText = "Payment Successful!";
-            msgEl.innerText = "Your investment package has been activated. Redirecting...";
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 3000);
+            statusEl.innerHTML = "✅ Payment Successful!";
+            statusEl.className = "status-success";
+            msgEl.innerText = data.message || "Your investment package has been activated. Redirecting...";
+            setTimeout(() => { 
+                window.location.href = 'dashboard.html'; 
+            }, 3000);
+        } else if (data.activated === true) {
+            statusEl.innerHTML = "✅ Already Activated!";
+            statusEl.className = "status-success";
+            msgEl.innerText = "Your package was already activated. Redirecting...";
+            setTimeout(() => { 
+                window.location.href = 'dashboard.html'; 
+            }, 2000);
         } else {
-            statusEl.innerText = "Payment Failed";
+            statusEl.innerHTML = "❌ Payment Failed";
+            statusEl.className = "status-error";
             msgEl.innerText = data.message || "We couldn't verify your payment. Please contact support.";
         }
     } catch (err) {
-        console.error(err);
+        console.error('Verification error:', err);
         loader.style.display = 'none';
-        statusEl.innerText = "Connection Error";
+        statusEl.innerHTML = "❌ Connection Error";
+        statusEl.className = "status-error";
         msgEl.innerText = "Something went wrong. Please check your internet and try again.";
         homeBtn.style.display = 'inline-block';
     }
 }
+
 window.onload = verifyPayment;
 </script>
 </body>

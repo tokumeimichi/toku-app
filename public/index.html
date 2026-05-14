@@ -1,59 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Toku Invest - Earn 20% Daily Returns | Nigeria's Premier Investment Platform</title>
-
-  <meta name="google-site-verification" content="zMy4QjzCbL5a13A6XQXhjl_fINgzO7rInKSenTPg_1E" />
-  <meta name="description" content="Invest from ₦500 and earn 20% daily returns for 7 days. Instant referral bonuses, secure Paystack payments. Join thousands of Nigerians earning daily with Toku.">
-  <meta name="keywords" content="investment Nigeria, daily ROI, Toku invest, earn money online, Paystack investment, passive income Nigeria">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes"/>
+  <title>Toku Invest | Earn 20% Daily Returns in Nigeria</title>
+  
+  <!-- Google Search Console Verification -->
+  <meta name="google-site-verification" content="F4zYhNYuP3p8fWRNJbnon03yBPyZe8yAyWq9gakEwnk" />
+  
+  <meta name="description" content="Invest from ₦500 and earn 20% daily returns for 7 days. Instant referral bonuses, secure Paystack payments. Join thousands of Nigerians earning daily with Toku."/>
+  <meta name="keywords" content="investment Nigeria, daily ROI, Toku invest, earn money online, Paystack investment, passive income Nigeria"/>
+  <meta name="author" content="Toku Invest"/>
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
+  
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; background: #0f0c29; color: #fff; overflow-x: hidden; }
     
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: #0f0c29;
-      color: #fff;
-      overflow-x: hidden;
-    }
-    
-    /* Animated Gradient Background */
-    .hero {
-      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-      min-height: 100vh;
-      position: relative;
-      overflow: hidden;
-    }
-    
-    .hero::before {
-      content: '';
-      position: absolute;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(108,99,255,0.1) 0%, transparent 70%);
-      animation: pulse 10s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-      0%, 100% { transform: translate(-25%, -25%) scale(1); opacity: 0.5; }
-      50% { transform: translate(-25%, -25%) scale(1.2); opacity: 0.8; }
-    }
-    
+    /* Navbar */
     .navbar {
       background: rgba(15, 12, 41, 0.95);
       backdrop-filter: blur(10px);
       padding: 1rem 0;
       transition: all 0.3s;
     }
-    
     .navbar-brand {
       font-size: 1.8rem;
       font-weight: 800;
@@ -61,16 +34,12 @@
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
-    
     .nav-link {
       color: #fff !important;
       font-weight: 500;
       transition: 0.3s;
     }
-    
-    .nav-link:hover {
-      color: #6c63ff !important;
-    }
+    .nav-link:hover { color: #6c63ff !important; }
     
     .btn-gradient {
       background: linear-gradient(135deg, #6c63ff, #48c6ef);
@@ -79,13 +48,11 @@
       border-radius: 50px;
       font-weight: 600;
       transition: transform 0.3s, box-shadow 0.3s;
+      color: #fff;
+      text-decoration: none;
+      display: inline-block;
     }
-    
-    .btn-gradient:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3);
-    }
-    
+    .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(108,99,255,0.3); color: #fff; }
     .btn-outline-gradient {
       background: transparent;
       border: 2px solid #6c63ff;
@@ -93,42 +60,26 @@
       border-radius: 50px;
       font-weight: 600;
       transition: 0.3s;
+      color: #fff;
+      text-decoration: none;
+      display: inline-block;
     }
+    .btn-outline-gradient:hover { background: linear-gradient(135deg, #6c63ff, #48c6ef); border-color: transparent; transform: translateY(-2px); color: #fff; }
     
-    .btn-outline-gradient:hover {
-      background: linear-gradient(135deg, #6c63ff, #48c6ef);
-      border-color: transparent;
-      transform: translateY(-2px);
-    }
-    
-    .hero-content {
-      padding: 120px 0 80px;
+    /* Hero Section */
+    .hero {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      min-height: 100vh;
       position: relative;
-      z-index: 1;
+      overflow: hidden;
     }
-    
-    .hero-title {
-      font-size: 3.5rem;
-      font-weight: 800;
-      margin-bottom: 20px;
-      line-height: 1.2;
-    }
-    
-    .hero-title span {
-      background: linear-gradient(135deg, #6c63ff, #48c6ef);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-    
-    .hero-subtitle {
-      font-size: 1.2rem;
-      color: rgba(255,255,255,0.8);
-      margin-bottom: 30px;
-    }
-    
+    .hero-content { padding: 120px 0 80px; position: relative; z-index: 1; }
+    .hero-title { font-size: 3.5rem; font-weight: 800; margin-bottom: 20px; line-height: 1.2; }
+    .hero-title span { background: linear-gradient(135deg, #6c63ff, #48c6ef); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero-subtitle { font-size: 1.2rem; color: rgba(255,255,255,0.8); margin-bottom: 30px; }
     .stats-badge {
       display: inline-block;
-      background: rgba(108, 99, 255, 0.2);
+      background: rgba(108,99,255,0.2);
       backdrop-filter: blur(10px);
       padding: 8px 20px;
       border-radius: 50px;
@@ -147,37 +98,13 @@
       border: 1px solid rgba(255,255,255,0.1);
       margin-bottom: 20px;
     }
+    .package-card:hover { transform: translateY(-10px); border-color: #6c63ff; box-shadow: 0 20px 40px rgba(108,99,255,0.2); }
+    .package-icon { font-size: 2.5rem; margin-bottom: 15px; }
+    .package-name { font-size: 1.3rem; font-weight: 700; margin-bottom: 10px; }
+    .package-price { font-size: 1.6rem; font-weight: 800; color: #6c63ff; margin-bottom: 15px; }
+    .package-daily { font-size: 0.9rem; color: #48c6ef; margin-bottom: 20px; }
     
-    .package-card:hover {
-      transform: translateY(-10px);
-      border-color: #6c63ff;
-      box-shadow: 0 20px 40px rgba(108,99,255,0.2);
-    }
-    
-    .package-icon {
-      font-size: 3rem;
-      margin-bottom: 15px;
-    }
-    
-    .package-name {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
-    
-    .package-price {
-      font-size: 2rem;
-      font-weight: 800;
-      color: #6c63ff;
-      margin-bottom: 15px;
-    }
-    
-    .package-daily {
-      font-size: 1rem;
-      color: #48c6ef;
-      margin-bottom: 20px;
-    }
-    
+    /* Feature Cards */
     .feature-card {
       background: rgba(255,255,255,0.05);
       border-radius: 15px;
@@ -185,23 +112,10 @@
       text-align: center;
       transition: 0.3s;
     }
+    .feature-card:hover { background: rgba(108,99,255,0.1); }
+    .feature-icon { font-size: 2.5rem; color: #6c63ff; margin-bottom: 15px; }
     
-    .feature-card:hover {
-      background: rgba(108,99,255,0.1);
-    }
-    
-    .feature-icon {
-      font-size: 2.5rem;
-      color: #6c63ff;
-      margin-bottom: 15px;
-    }
-    
-    .section-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 50px;
-      text-align: center;
-    }
+    .section-title { font-size: 2.5rem; font-weight: 700; margin-bottom: 50px; text-align: center; }
     
     footer {
       background: #0f0c29;
@@ -211,25 +125,20 @@
     }
     
     @media (max-width: 768px) {
-      .hero-title {
-        font-size: 2rem;
-      }
-      .hero-subtitle {
-        font-size: 1rem;
-      }
-      .section-title {
-        font-size: 1.8rem;
-      }
+      .hero-title { font-size: 2rem; }
+      .hero-subtitle { font-size: 1rem; }
+      .section-title { font-size: 1.8rem; }
     }
   </style>
 </head>
 <body>
 
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg fixed-top">
   <div class="container">
     <a class="navbar-brand" href="#">Toku<span style="color:#48c6ef;">.</span></a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-      <span class="navbar-toggler-icon"></span>
+      <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav ms-auto">
@@ -238,12 +147,13 @@
         <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
         <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
       </ul>
-      <a href="/user/login.html" class="btn btn-outline-gradient ms-lg-3">Login</a>
-      <a href="/user/signup.html" class="btn btn-gradient ms-2">Sign Up</a>
+      <a href="/user/login.html" class="btn-outline-gradient ms-lg-3">Login</a>
+      <a href="/user/signup.html" class="btn-gradient ms-2">Sign Up</a>
     </div>
   </div>
 </nav>
 
+<!-- Hero Section -->
 <section class="hero" id="home">
   <div class="container hero-content">
     <div class="row align-items-center">
@@ -253,22 +163,22 @@
         </div>
         <h1 class="hero-title">Earn <span>20% Daily</span> Returns on Your Investment</h1>
         <p class="hero-subtitle">Start with as low as ₦500 and watch your money grow daily. Secure, transparent, and instant payouts via Paystack.</p>
-        <div class="d-flex gap-3">
-          <a href="/user/signup.html" class="btn btn-gradient">Get Started Now</a>
-          <a href="#packages" class="btn btn-outline-gradient">View Packages</a>
+        <div class="d-flex gap-3 flex-wrap">
+          <a href="/user/signup.html" class="btn-gradient">Get Started Now</a>
+          <a href="#packages" class="btn-outline-gradient">View Packages</a>
         </div>
         
         <div class="row mt-5">
           <div class="col-4">
-            <h3 class="text-gradient">₦50M+</h3>
+            <h3 class="text-gradient" style="background:linear-gradient(135deg,#6c63ff,#48c6ef); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">₦50M+</h3>
             <small>Total Paid Out</small>
           </div>
           <div class="col-4">
-            <h3 class="text-gradient">500+</h3>
+            <h3 class="text-gradient" style="background:linear-gradient(135deg,#6c63ff,#48c6ef); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">500+</h3>
             <small>Active Investors</small>
           </div>
           <div class="col-4">
-            <h3 class="text-gradient">7 Days</h3>
+            <h3 class="text-gradient" style="background:linear-gradient(135deg,#6c63ff,#48c6ef); -webkit-background-clip:text; -webkit-text-fill-color:transparent;">7 Days</h3>
             <small>Investment Cycle</small>
           </div>
         </div>
@@ -280,6 +190,7 @@
   </div>
 </section>
 
+<!-- Packages Section -->
 <section id="packages" class="py-5" style="background: #1a1a2e;">
   <div class="container">
     <h2 class="section-title">Our Investment <span style="color:#6c63ff;">Packages</span></h2>
@@ -290,8 +201,8 @@
           <h3 class="package-name">Starter</h3>
           <div class="package-price">₦500</div>
           <div class="package-daily">Daily Return: ₦100</div>
-          <small>7 days | 20% daily</small>
-          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+          <small>7 days | 20% daily</small><br/>
+          <a href="/user/signup.html" class="btn-gradient mt-3 w-100" style="padding:8px;">Invest Now</a>
         </div>
       </div>
       <div class="col-lg-2 col-md-4 col-6">
@@ -300,8 +211,8 @@
           <h3 class="package-name">Basic</h3>
           <div class="package-price">₦1,000</div>
           <div class="package-daily">Daily Return: ₦200</div>
-          <small>7 days | 20% daily</small>
-          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+          <small>7 days | 20% daily</small><br/>
+          <a href="/user/signup.html" class="btn-gradient mt-3 w-100" style="padding:8px;">Invest Now</a>
         </div>
       </div>
       <div class="col-lg-2 col-md-4 col-6">
@@ -310,8 +221,8 @@
           <h3 class="package-name">Standard</h3>
           <div class="package-price">₦2,000</div>
           <div class="package-daily">Daily Return: ₦400</div>
-          <small>7 days | 20% daily</small>
-          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+          <small>7 days | 20% daily</small><br/>
+          <a href="/user/signup.html" class="btn-gradient mt-3 w-100" style="padding:8px;">Invest Now</a>
         </div>
       </div>
       <div class="col-lg-2 col-md-4 col-6">
@@ -320,8 +231,8 @@
           <h3 class="package-name">Premium</h3>
           <div class="package-price">₦5,000</div>
           <div class="package-daily">Daily Return: ₦1,000</div>
-          <small>7 days | 20% daily</small>
-          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+          <small>7 days | 20% daily</small><br/>
+          <a href="/user/signup.html" class="btn-gradient mt-3 w-100" style="padding:8px;">Invest Now</a>
         </div>
       </div>
       <div class="col-lg-2 col-md-4 col-6">
@@ -330,14 +241,15 @@
           <h3 class="package-name">VIP</h3>
           <div class="package-price">₦10,000</div>
           <div class="package-daily">Daily Return: ₦2,000</div>
-          <small>7 days | 20% daily</small>
-          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+          <small>7 days | 20% daily</small><br/>
+          <a href="/user/signup.html" class="btn-gradient mt-3 w-100" style="padding:8px;">Invest Now</a>
         </div>
       </div>
     </div>
   </div>
 </section>
 
+<!-- How It Works -->
 <section id="how-it-works" class="py-5">
   <div class="container">
     <h2 class="section-title">How <span style="color:#6c63ff;">It Works</span></h2>
@@ -374,6 +286,7 @@
   </div>
 </section>
 
+<!-- Features -->
 <section id="features" class="py-5" style="background: #1a1a2e;">
   <div class="container">
     <h2 class="section-title">Why Choose <span style="color:#6c63ff;">Toku?</span></h2>
@@ -403,6 +316,7 @@
   </div>
 </section>
 
+<!-- Footer -->
 <footer>
   <div class="container">
     <div class="row">
@@ -410,9 +324,9 @@
         <h3 class="mb-3">Toku<span style="color:#48c6ef;">.</span></h3>
         <p class="text-muted">© 2025 Toku Investment Platform. All rights reserved.</p>
         <div class="mt-3">
-          <a href="/user/login.html" class="text-white me-3">Login</a>
-          <a href="/user/signup.html" class="text-white me-3">Sign Up</a>
-          <a href="#" class="text-white">Contact Us</a>
+          <a href="/user/login.html" class="text-white me-3 text-decoration-none">Login</a>
+          <a href="/user/signup.html" class="text-white me-3 text-decoration-none">Sign Up</a>
+          <a href="#" class="text-white text-decoration-none">Contact Us</a>
         </div>
       </div>
     </div>
