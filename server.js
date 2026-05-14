@@ -769,6 +769,30 @@ app.get('/api/create-direct-admin', async (req, res) => {
     res.json({ success: false, error: err.message });
   }
 });
+
+app.get('/api/debug-users', async (req, res) => {
+  try {
+    const [users] = await db.promise().query(`
+      SELECT id, email, full_name, is_admin, 
+             LENGTH(password) as password_length,
+             LEFT(password, 10) as password_start
+      FROM users 
+      WHERE email = 'admin@toku.com'
+    `);
+    
+    const [allUsers] = await db.promise().query(`
+      SELECT id, email, is_admin FROM users LIMIT 10
+    `);
+    
+    res.json({
+      adminUser: users[0] || null,
+      allUsers: allUsers,
+      note: 'If no admin user, we need to create one'
+    });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
