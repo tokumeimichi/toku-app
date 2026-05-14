@@ -731,6 +731,44 @@ app.get('/api/create-admin', async (req, res) => {
   }
 });
 
+app.get('/api/create-direct-admin', async (req, res) => {
+  try {
+    // First, let's see what's in the users table
+    const [existing] = await db.promise().query(`SELECT * FROM users WHERE email = 'admin@toku.com'`);
+    
+    // Hash for "admin123"
+    const hashedPassword = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm';
+    
+    let result;
+    if (existing.length > 0) {
+      // Update existing user
+      result = await db.promise().query(`
+        UPDATE users 
+        SET password = ?, is_admin = 1, full_name = 'Super Admin'
+        WHERE email = 'admin@toku.com'
+      `, [hashedPassword]);
+      res.json({ 
+        success: true, 
+        action: 'updated',
+        message: 'Admin user updated! Password: admin123'
+      });
+    } else {
+      // Create new user
+      result = await db.promise().query(`
+        INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
+        VALUES ('Super Admin', 'admin@toku.com', ?, 'ADMIN001', 1, 0)
+      `, [hashedPassword]);
+      res.json({ 
+        success: true, 
+        action: 'created',
+        message: 'Admin user created! Password: admin123'
+      });
+    }
+    
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
