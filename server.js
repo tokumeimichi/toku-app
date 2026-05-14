@@ -16,17 +16,36 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Database ─────────────────────────────────────
 // ── Database ─────────────────────────────────────
+// ── Database ─────────────────────────────────────
 let db;
 
 if (process.env.DATABASE_URL) {
-  console.log('Connecting to Aiven MySQL...');
-  db = mysql.createConnection(process.env.DATABASE_URL);
+  console.log('DATABASE_URL exists, connecting...');
+  console.log('URL starts with:', process.env.DATABASE_URL.substring(0, 50));
   
-  db.connect((err) => {
-    if (err) console.error('❌ DB Error:', err.message);
-    else console.log('✅ Connected to Aiven MySQL Cloud');
-  });
+  try {
+    db = mysql.createConnection(process.env.DATABASE_URL);
+    
+    db.connect((err) => {
+      if (err) {
+        console.error('❌ DB Error Code:', err.code);
+        console.error('❌ DB Error Message:', err.message);
+        console.error('❌ DB Error Fatal:', err.fatal);
+      } else {
+        console.log('✅ Connected to Aiven MySQL Cloud');
+        
+        // Test query to verify connection
+        db.query('SELECT 1', (err, result) => {
+          if (err) console.error('Test query failed:', err);
+          else console.log('Database test query successful');
+        });
+      }
+    });
+  } catch (err) {
+    console.error('❌ Connection creation error:', err.message);
+  }
 } else {
+  console.log('No DATABASE_URL, using local config');
   db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -497,6 +516,19 @@ app.get('/api/admin/users', (req, res) => {
   db.query(`SELECT id, full_name, email, balance, has_invested, referral_code, created_at, is_admin FROM users ORDER BY created_at DESC`, (err, results) => {
     if (err) return res.status(500).json({ error: 'Failed to fetch users' });
     res.json(results);
+  });
+});
+
+app.get('/api/test-db', (req, res) => {
+  if (!db) {
+    return res.json({ error: 'Database not connected' });
+  }
+  db.query('SELECT NOW() as time', (err, result) => {
+    if (err) {
+      res.json({ error: err.message, code: err.code });
+    } else {
+      res.json({ success: true, time: result[0].time });
+    }
   });
 });
 
