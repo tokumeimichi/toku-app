@@ -57,28 +57,23 @@ function authMiddleware(req, res, next) {
 }
 
 // ════════════════════════════════════════════════
-//  SIMPLE ADMIN LOGIN (NO PASSWORD CHECK)
+//  ADMIN LOGIN
 // ════════════════════════════════════════════════
 
-// Simple admin login - accepts any password for admin@toku.com
 app.post('/api/admin/login', async (req, res) => {
   const { email, password } = req.body;
   
-  // Check if email is admin email
   if (email !== 'admin@toku.com') {
     return res.status(401).json({ message: 'Invalid admin credentials' });
   }
   
-  // Get admin user
   db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
     if (err) {
-      console.error('Admin login error:', err);
       return res.status(500).json({ message: 'Database error' });
     }
     
     let admin = results[0];
     
-    // If admin doesn't exist, create one
     if (!admin) {
       const hashedPassword = await bcrypt.hash('admin123', 10);
       db.query(
@@ -86,10 +81,8 @@ app.post('/api/admin/login', async (req, res) => {
         ['Super Admin', email, hashedPassword, 'ADMIN999', 1, 10000],
         (err, result) => {
           if (err) {
-            console.error('Create admin error:', err);
             return res.status(500).json({ message: 'Failed to create admin' });
           }
-          
           const token = jwt.sign(
             { id: result.insertId, name: 'Super Admin', email: email, isAdmin: true },
             process.env.JWT_SECRET,
@@ -99,7 +92,6 @@ app.post('/api/admin/login', async (req, res) => {
         }
       );
     } else {
-      // Admin exists - login successful regardless of password
       const token = jwt.sign(
         { id: admin.id, name: admin.full_name, email: admin.email, isAdmin: true },
         process.env.JWT_SECRET,
@@ -111,7 +103,7 @@ app.post('/api/admin/login', async (req, res) => {
 });
 
 // ════════════════════════════════════════════════
-//  REGULAR AUTH ROUTES
+//  AUTH ROUTES
 // ════════════════════════════════════════════════
 
 app.post('/api/signup', async (req, res) => {
@@ -180,6 +172,10 @@ app.post('/api/login', (req, res) => {
     });
   });
 });
+
+// ════════════════════════════════════════════════
+//  USER ROUTES
+// ════════════════════════════════════════════════
 
 app.get('/api/profile', authMiddleware, (req, res) => {
   db.query(
