@@ -665,6 +665,33 @@ app.get('/api/setup-admin', async (req, res) => {
   }
 });
 
+app.get('/api/fix-signup', async (req, res) => {
+  try {
+    // Add phone column if missing
+    await db.promise().query(`
+      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) NULL
+    `);
+    res.json({ success: true, message: 'Signup fixed! Phone column added.' });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
+app.get('/api/reset-admin', async (req, res) => {
+  try {
+    // Hash for "admin123"
+    const hashedPassword = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm';
+    
+    await db.promise().query(`
+      UPDATE users SET password = ? WHERE email = 'admin@toku.com'
+    `, [hashedPassword]);
+    
+    res.json({ success: true, message: 'Admin password reset to: admin123' });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
