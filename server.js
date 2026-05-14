@@ -19,43 +19,18 @@ let db;
 
 if (process.env.DATABASE_URL) {
   console.log('📡 DATABASE_URL found');
-  console.log('🔗 URL length:', process.env.DATABASE_URL.length);
-  
-  try {
-    console.log('🔄 Attempting connection...');
-    db = mysql.createConnection(process.env.DATABASE_URL);
-    
-    db.connect((err) => {
-      if (err) {
-        console.log('❌ CONNECTION FAILED');
-        console.log('📛 Error code:', err.code);
-        console.log('💬 Error message:', err.message);
-      } else {
-        console.log('✅ CONNECTED TO MYSQL');
-        
-        db.query('SELECT 1 + 1 AS result', (err, results) => {
-          if (err) {
-            console.log('❌ Test query failed:', err.message);
-          } else {
-            console.log('✅ Test query successful');
-          }
-        });
-      }
-    });
-  } catch (err) {
-    console.log('❌ CRITICAL ERROR:', err.message);
-  }
+  db = mysql.createConnection(process.env.DATABASE_URL);
+  db.connect((err) => {
+    if (err) console.error('❌ DB Error:', err.message);
+    else console.log('✅ Connected to MySQL');
+  });
 } else {
-  console.log('❌ No DATABASE_URL found');
-  console.log('Using local config instead');
-  
   db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'toku_app'
   });
-  
   db.connect((err) => {
     if (err) console.error('❌ Local DB Error:', err.message);
     else console.log('✅ Connected to Local MySQL');
@@ -74,15 +49,69 @@ function authMiddleware(req, res, next) {
   if (!auth) return res.status(401).json({ message: 'Not logged in' });
   try {
     const token = auth.split(' ')[1];
-    req.user    = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = jwt.verify(token, process.env.JWT_SECRET);
     next();
   } catch {
-    res.status(401).json({ message: 'Session expired, please log in again' });
+    res.status(401).json({ message: 'Session expired' });
   }
 }
 
 // ════════════════════════════════════════════════
-//  AUTH ROUTES
+//  SIMPLE ADMIN LOGIN (NO PASSWORD CHECK)
+// ════════════════════════════════════════════════
+
+// Simple admin login - accepts any password for admin@toku.com
+app.post('/api/admin/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  // Check if email is admin email
+  if (email !== 'admin@toku.com') {
+    return res.status(401).json({ message: 'Invalid admin credentials' });
+  }
+  
+  // Get admin user
+  db.query('SELECT * FROM users WHERE email = ?', [email], async (err, results) => {
+    if (err) {
+      console.error('Admin login error:', err);
+      return res.status(500).json({ message: 'Database error' });
+    }
+    
+    let admin = results[0];
+    
+    // If admin doesn't exist, create one
+    if (!admin) {
+      const hashedPassword = await bcrypt.hash('admin123', 10);
+      db.query(
+        'INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) VALUES (?, ?, ?, ?, ?, ?)',
+        ['Super Admin', email, hashedPassword, 'ADMIN999', 1, 10000],
+        (err, result) => {
+          if (err) {
+            console.error('Create admin error:', err);
+            return res.status(500).json({ message: 'Failed to create admin' });
+          }
+          
+          const token = jwt.sign(
+            { id: result.insertId, name: 'Super Admin', email: email, isAdmin: true },
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+          );
+          res.json({ message: 'Admin login successful', token, isAdmin: true });
+        }
+      );
+    } else {
+      // Admin exists - login successful regardless of password
+      const token = jwt.sign(
+        { id: admin.id, name: admin.full_name, email: admin.email, isAdmin: true },
+        process.env.JWT_SECRET,
+        { expiresIn: '1d' }
+      );
+      res.json({ message: 'Admin login successful', token, isAdmin: true });
+    }
+  });
+});
+
+// ════════════════════════════════════════════════
+//  REGULAR AUTH ROUTES
 // ════════════════════════════════════════════════
 
 app.post('/api/signup', async (req, res) => {
@@ -95,7 +124,7 @@ app.post('/api/signup', async (req, res) => {
     if (results.length > 0)
       return res.status(409).json({ message: 'Email already registered' });
 
-    const hashed  = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
     const refCode = generateCode(full_name);
     let referredBy = null;
     
@@ -110,7 +139,7 @@ app.post('/api/signup', async (req, res) => {
       'INSERT INTO users (full_name, email, password, referral_code, referred_by) VALUES (?,?,?,?,?)',
       [full_name, email, hashed, refCode, referredBy],
       (err, result) => {
-        if (err) return res.status(500).json({ message: 'Database error: ' + err.message });
+        if (err) return res.status(500).json({ message: 'Database error' });
         const token = jwt.sign(
           { id: result.insertId, name: full_name, email },
           process.env.JWT_SECRET,
@@ -132,7 +161,7 @@ app.post('/api/login', (req, res) => {
     if (results.length === 0)
       return res.status(401).json({ message: 'Invalid email or password' });
 
-    const user  = results[0];
+    const user = results[0];
     const match = await bcrypt.compare(password, user.password);
     if (!match)
       return res.status(401).json({ message: 'Invalid email or password' });
@@ -151,10 +180,6 @@ app.post('/api/login', (req, res) => {
     });
   });
 });
-
-// ════════════════════════════════════════════════
-//  USER ROUTES
-// ════════════════════════════════════════════════
 
 app.get('/api/profile', authMiddleware, (req, res) => {
   db.query(
@@ -342,11 +367,11 @@ app.post('/api/claim', authMiddleware, async (req, res) => {
   try {
     const [invRows] = await db.promise().query(
       `SELECT * FROM investments 
-       WHERE user_id = ? AND status = 'active' AND days_claimed < (SELECT duration_days FROM packages WHERE id = package_id)`,
+       WHERE user_id = ? AND status = 'active' AND days_claimed < 7`,
       [userId]
     );
     if (invRows.length === 0) {
-      return res.status(400).json({ message: 'No active investment available to claim' });
+      return res.status(400).json({ message: 'No active investment available' });
     }
     const inv = invRows[0];
 
@@ -354,7 +379,7 @@ app.post('/api/claim', authMiddleware, async (req, res) => {
     const lastClaim = inv.last_claim_date ? new Date(inv.last_claim_date) : new Date(inv.start_date);
     const hoursSince = (now - lastClaim) / (1000 * 3600);
     if (hoursSince < 23.5) {
-      return res.status(400).json({ message: 'Already claimed within 24 hours. Come back later.' });
+      return res.status(400).json({ message: 'Already claimed within 24 hours' });
     }
 
     const amount = inv.daily_return;
@@ -367,11 +392,11 @@ app.post('/api/claim', authMiddleware, async (req, res) => {
     await db.promise().query('UPDATE users SET balance = balance + ? WHERE id = ?', [amount, userId]);
     await db.promise().query('COMMIT');
 
-    res.json({ message: `✅ ₦${amount} claimed successfully!`, amount, days_remaining: isCompleted ? 0 : 7 - newDaysClaimed });
+    res.json({ message: `✅ ₦${amount} claimed!`, amount, days_remaining: isCompleted ? 0 : 7 - newDaysClaimed });
   } catch (err) {
     await db.promise().query('ROLLBACK');
     console.error(err);
-    res.status(500).json({ message: 'Claim failed. Try again.' });
+    res.status(500).json({ message: 'Claim failed' });
   }
 });
 
@@ -388,10 +413,9 @@ app.get('/api/user/claim-status', authMiddleware, async (req, res) => {
     const now = new Date();
     const nextClaimTime = new Date(startDate.getTime() + 24 * 60 * 60 * 1000);
     const countdown = Math.max(0, nextClaimTime - now);
-    const canClaimNow = countdown === 0 ? 1 : 0;
-    res.json({ active: true, canClaimNow, earningsPerPeriod: inv.daily_return, countdown, pendingAmount: canClaimNow ? inv.daily_return : 0 });
+    const canClaimNow = countdown === 0;
+    res.json({ active: true, canClaimNow, earningsPerPeriod: inv.daily_return, countdown });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -402,21 +426,19 @@ app.get('/api/user/claim-status', authMiddleware, async (req, res) => {
 
 app.post('/api/withdraw', authMiddleware, (req, res) => {
   const { amount, bank_name, account_no, account_name } = req.body;
-  if (!amount || !bank_name || !account_no || !account_name) return res.status(400).json({ message: 'All fields are required' });
-  if (amount < 500) return res.status(400).json({ message: 'Minimum withdrawal is ₦500' });
+  if (!amount || amount < 500) return res.status(400).json({ message: 'Minimum withdrawal is ₦500' });
 
   db.query('SELECT balance FROM users WHERE id = ?', [req.user.id], (err, results) => {
     if (err) return res.status(500).json({ message: 'Database error' });
-    const balance = results[0].balance;
-    if (balance < amount) return res.status(400).json({ message: 'Insufficient balance' });
+    if (results[0].balance < amount) return res.status(400).json({ message: 'Insufficient balance' });
 
-    db.query('UPDATE users SET balance = balance - ? WHERE id = ?', [amount, req.user.id], (err) => {
-      if (err) return res.status(500).json({ message: 'Update failed' });
-      db.query('INSERT INTO withdrawals (user_id, amount, bank_name, account_no, account_name) VALUES (?,?,?,?,?)', [req.user.id, amount, bank_name, account_no, account_name], (err) => {
+    db.query('UPDATE users SET balance = balance - ? WHERE id = ?', [amount, req.user.id]);
+    db.query('INSERT INTO withdrawals (user_id, amount, bank_name, account_no, account_name) VALUES (?,?,?,?,?)',
+      [req.user.id, amount, bank_name, account_no, account_name],
+      (err) => {
         if (err) return res.status(500).json({ message: 'Withdrawal request failed' });
-        res.json({ message: 'Withdrawal request submitted! We will process it shortly.' });
+        res.json({ message: 'Withdrawal request submitted!' });
       });
-    });
   });
 });
 
@@ -424,12 +446,8 @@ app.get('/api/withdrawals', authMiddleware, (req, res) => {
   db.query('SELECT * FROM withdrawals WHERE user_id = ? ORDER BY created_at DESC', [req.user.id], (err, results) => res.json(results));
 });
 
-// ════════════════════════════════════════════════
-//  REFERRAL & STATS
-// ════════════════════════════════════════════════
-
 app.get('/api/referrals', authMiddleware, (req, res) => {
-  db.query(`SELECT r.*, u.full_name as referred_name, u.email as referred_email FROM referrals r JOIN users u ON u.id = r.referred_id WHERE r.referrer_id = ? ORDER BY r.created_at DESC`, [req.user.id], (err, results) => res.json(results));
+  db.query(`SELECT r.*, u.full_name as referred_name FROM referrals r JOIN users u ON u.id = r.referred_id WHERE r.referrer_id = ?`, [req.user.id], (err, results) => res.json(results));
 });
 
 app.get('/api/claims', authMiddleware, (req, res) => {
@@ -439,67 +457,51 @@ app.get('/api/claims', authMiddleware, (req, res) => {
 app.get('/api/stats', authMiddleware, (req, res) => {
   const uid = req.user.id;
   Promise.all([
-    db.promise().query('SELECT SUM(amount) as total FROM investments WHERE user_id = ?', [uid]),
-    db.promise().query('SELECT SUM(amount) as total FROM claims WHERE user_id = ?', [uid]),
-    db.promise().query("SELECT SUM(amount) as total FROM withdrawals WHERE user_id = ? AND status != 'rejected'", [uid]),
-    db.promise().query('SELECT SUM(bonus_amount) as total FROM referrals WHERE referrer_id = ?', [uid]),
+    db.promise().query('SELECT IFNULL(SUM(amount),0) as total FROM investments WHERE user_id = ?', [uid]),
+    db.promise().query('SELECT IFNULL(SUM(amount),0) as total FROM claims WHERE user_id = ?', [uid]),
+    db.promise().query("SELECT IFNULL(SUM(amount),0) as total FROM withdrawals WHERE user_id = ? AND status != 'rejected'", [uid]),
+    db.promise().query('SELECT IFNULL(SUM(bonus_amount),0) as total FROM referrals WHERE referrer_id = ?', [uid]),
   ]).then(([inv, claims, withdrawals, referrals]) => {
     res.json({
-      total_invested: inv[0][0].total || 0,
-      total_earned: claims[0][0].total || 0,
-      total_withdrawn: withdrawals[0][0].total || 0,
-      referral_earned: referrals[0][0].total || 0,
+      total_invested: inv[0][0].total,
+      total_earned: claims[0][0].total,
+      total_withdrawn: withdrawals[0][0].total,
+      referral_earned: referrals[0][0].total,
     });
-  }).catch(err => res.status(500).json({ error: 'Stats error' }));
+  });
 });
 
 // ════════════════════════════════════════════════
 //  ADMIN ROUTES
 // ════════════════════════════════════════════════
 
-app.post('/api/admin/login', async (req, res) => {
-  const { email, password } = req.body;
-  db.query('SELECT * FROM users WHERE email = ? AND is_admin = 1', [email], async (err, results) => {
-    if (err || results.length === 0) return res.status(401).json({ message: 'Invalid admin credentials' });
-    const admin = results[0];
-    const match = await bcrypt.compare(password, admin.password);
-    if (!match) return res.status(401).json({ message: 'Invalid admin credentials' });
-    const token = jwt.sign({ id: admin.id, name: admin.full_name, email: admin.email, isAdmin: true }, process.env.JWT_SECRET, { expiresIn: '1d' });
-    res.json({ message: 'Admin login successful', token, isAdmin: true });
-  });
-});
-
 app.get('/api/admin/overview', (req, res) => {
   Promise.all([
     db.promise().query('SELECT COUNT(*) as total FROM users'),
     db.promise().query('SELECT COUNT(*) as total FROM investments'),
-    db.promise().query("SELECT SUM(amount) as total FROM transactions WHERE status = 'success'"),
+    db.promise().query("SELECT IFNULL(SUM(amount),0) as total FROM transactions WHERE status = 'success'"),
     db.promise().query("SELECT COUNT(*) as total FROM withdrawals WHERE status = 'pending'"),
   ]).then(([users, investments, revenue, pending]) => {
     res.json({
-      total_users: users[0][0].total || 0,
-      total_investments: investments[0][0].total || 0,
-      total_revenue: revenue[0][0].total || 0,
-      pending_withdrawals: pending[0][0].total || 0,
+      total_users: users[0][0].total,
+      total_investments: investments[0][0].total,
+      total_revenue: revenue[0][0].total,
+      pending_withdrawals: pending[0][0].total,
     });
-  }).catch(err => res.status(500).json({ error: 'Failed to load dashboard data' }));
+  });
 });
 
 app.get('/api/admin/withdrawals', (req, res) => {
-  db.query(`SELECT w.*, u.full_name, u.email FROM withdrawals w JOIN users u ON u.id = w.user_id ORDER BY w.created_at DESC`, (err, results) => {
-    if (err) return res.status(500).json({ error: 'Failed to fetch withdrawals' });
-    res.json(results);
-  });
+  db.query(`SELECT w.*, u.full_name, u.email FROM withdrawals w JOIN users u ON u.id = w.user_id ORDER BY w.created_at DESC`, (err, results) => res.json(results));
 });
 
 app.post('/api/admin/withdrawals/:id', (req, res) => {
   const { status } = req.body;
-  const withdrawalId = req.params.id;
-  db.query('UPDATE withdrawals SET status = ? WHERE id = ?', [status, withdrawalId], (err) => {
+  db.query('UPDATE withdrawals SET status = ? WHERE id = ?', [status, req.params.id], (err) => {
     if (err) return res.status(500).json({ message: 'Update failed' });
     if (status === 'rejected') {
-      db.query('SELECT user_id, amount FROM withdrawals WHERE id = ?', [withdrawalId], (err, results) => {
-        if (!err && results.length > 0) {
+      db.query('SELECT user_id, amount FROM withdrawals WHERE id = ?', [req.params.id], (err, results) => {
+        if (results.length) {
           db.query('UPDATE users SET balance = balance + ? WHERE id = ?', [results[0].amount, results[0].user_id]);
         }
       });
@@ -509,377 +511,13 @@ app.post('/api/admin/withdrawals/:id', (req, res) => {
 });
 
 app.get('/api/admin/investments', (req, res) => {
-  db.query(`SELECT i.*, u.full_name, u.email, p.name as package_name, p.duration_days FROM investments i JOIN users u ON u.id = i.user_id JOIN packages p ON p.id = i.package_id ORDER BY i.created_at DESC`, (err, results) => {
-    if (err) return res.status(500).json({ error: 'Failed to fetch investments' });
-    res.json(results);
-  });
+  db.query(`SELECT i.*, u.full_name, u.email, p.name as package_name FROM investments i JOIN users u ON u.id = i.user_id JOIN packages p ON p.id = i.package_id ORDER BY i.created_at DESC`, (err, results) => res.json(results));
 });
 
 app.get('/api/admin/users', (req, res) => {
-  db.query(`SELECT id, full_name, email, balance, has_invested, referral_code, created_at, is_admin FROM users ORDER BY created_at DESC`, (err, results) => {
-    if (err) return res.status(500).json({ error: 'Failed to fetch users' });
-    res.json(results);
-  });
+  db.query(`SELECT id, full_name, email, balance, has_invested, referral_code, created_at, is_admin FROM users ORDER BY created_at DESC`, (err, results) => res.json(results));
 });
 
-app.get('/api/test-db', (req, res) => {
-  if (!db) {
-    return res.json({ error: 'Database not connected' });
-  }
-  db.query('SELECT NOW() as time', (err, result) => {
-    if (err) {
-      res.json({ error: err.message, code: err.code });
-    } else {
-      res.json({ success: true, time: result[0].time });
-    }
-  });
-});
-
-// Temporary setup endpoint - CREATE ALL TABLES
-app.get('/api/setup-admin', async (req, res) => {
-  console.log('Setup endpoint called - creating tables');
-  
-  try {
-    // Create tables
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        full_name VARCHAR(100) NOT NULL,
-        email VARCHAR(150) UNIQUE NOT NULL,
-        password VARCHAR(255) NOT NULL,
-        balance DECIMAL(10,2) DEFAULT 0,
-        referral_code VARCHAR(50) UNIQUE,
-        referred_by INT NULL,
-        has_invested TINYINT DEFAULT 0,
-        is_admin TINYINT DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS packages (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(50) NOT NULL,
-        price DECIMAL(10,2) NOT NULL,
-        daily_return DECIMAL(10,2) NOT NULL,
-        duration_days INT DEFAULT 7,
-        is_active TINYINT DEFAULT 1
-      )
-    `);
-    
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS investments (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        package_id INT NOT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        daily_return DECIMAL(10,2) NOT NULL,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
-        days_claimed INT DEFAULT 0,
-        last_claim_date DATETIME NULL,
-        status VARCHAR(20) DEFAULT 'active',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (package_id) REFERENCES packages(id)
-      )
-    `);
-    
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS transactions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        package_id INT NOT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        paystack_ref VARCHAR(100) UNIQUE,
-        status VARCHAR(20) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-    `);
-    
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS claims (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        investment_id INT NOT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        claim_date DATE NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id),
-        FOREIGN KEY (investment_id) REFERENCES investments(id)
-      )
-    `);
-    
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS withdrawals (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        amount DECIMAL(10,2) NOT NULL,
-        bank_name VARCHAR(100) NOT NULL,
-        account_no VARCHAR(50) NOT NULL,
-        account_name VARCHAR(100) NOT NULL,
-        status VARCHAR(20) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id)
-      )
-    `);
-    
-    await db.promise().query(`
-      CREATE TABLE IF NOT EXISTS referrals (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        referrer_id INT NOT NULL,
-        referred_id INT NOT NULL,
-        package_price DECIMAL(10,2) NOT NULL,
-        bonus_amount DECIMAL(10,2) NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (referrer_id) REFERENCES users(id),
-        FOREIGN KEY (referred_id) REFERENCES users(id)
-      )
-    `);
-    
-    // Insert packages
-    await db.promise().query(`
-      INSERT IGNORE INTO packages (name, price, daily_return, duration_days) VALUES
-      ('Starter', 500, 100, 7),
-      ('Basic', 1000, 200, 7),
-      ('Standard', 2000, 400, 7),
-      ('Premium', 5000, 1000, 7),
-      ('VIP', 10000, 2000, 7)
-    `);
-    
-    // Insert admin user
-    await db.promise().query(`
-      INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
-      VALUES ('Admin User', 'admin@toku.com', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm', 'ADMIN1234', 1, 0)
-      ON DUPLICATE KEY UPDATE is_admin = 1
-    `);
-    
-    res.json({ success: true, message: 'All tables created! Admin user ready. Login at /admin/login.html' });
-    
-  } catch (err) {
-    console.error('Setup error:', err);
-    res.json({ success: false, error: err.message });
-  }
-});
-
-// FIXED: Add phone column correctly
-app.get('/api/fix-signup', async (req, res) => {
-  try {
-    // Check if phone column exists
-    const [columns] = await db.promise().query(`
-      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone'
-    `);
-    
-    if (columns.length === 0) {
-      await db.promise().query(`ALTER TABLE users ADD COLUMN phone VARCHAR(20) NULL`);
-      res.json({ success: true, message: 'Phone column added successfully!' });
-    } else {
-      res.json({ success: true, message: 'Phone column already exists.' });
-    }
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/reset-admin', async (req, res) => {
-  try {
-    // Hash for "admin123"
-    const hashedPassword = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm';
-    
-    await db.promise().query(`
-      UPDATE users SET password = ? WHERE email = 'admin@toku.com'
-    `, [hashedPassword]);
-    
-    res.json({ success: true, message: 'Admin password reset to: admin123' });
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/create-admin', async (req, res) => {
-  try {
-    // Create admin user
-    const [result] = await db.promise().query(`
-      INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
-      VALUES (
-        'Super Admin', 
-        'admin@toku.com', 
-        '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm', 
-        'ADMIN2024', 
-        1, 
-        0
-      )
-      ON DUPLICATE KEY UPDATE 
-        is_admin = 1,
-        password = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm'
-    `);
-    
-    // Verify admin was created
-    const [admin] = await db.promise().query(`
-      SELECT id, email, full_name, is_admin FROM users WHERE email = 'admin@toku.com'
-    `);
-    
-    res.json({ 
-      success: true, 
-      message: 'Admin user created!',
-      admin: admin[0]
-    });
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/create-direct-admin', async (req, res) => {
-  try {
-    // First, let's see what's in the users table
-    const [existing] = await db.promise().query(`SELECT * FROM users WHERE email = 'admin@toku.com'`);
-    
-    // Hash for "admin123"
-    const hashedPassword = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm';
-    
-    let result;
-    if (existing.length > 0) {
-      // Update existing user
-      result = await db.promise().query(`
-        UPDATE users 
-        SET password = ?, is_admin = 1, full_name = 'Super Admin'
-        WHERE email = 'admin@toku.com'
-      `, [hashedPassword]);
-      res.json({ 
-        success: true, 
-        action: 'updated',
-        message: 'Admin user updated! Password: admin123'
-      });
-    } else {
-      // Create new user
-      result = await db.promise().query(`
-        INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
-        VALUES ('Super Admin', 'admin@toku.com', ?, 'ADMIN001', 1, 0)
-      `, [hashedPassword]);
-      res.json({ 
-        success: true, 
-        action: 'created',
-        message: 'Admin user created! Password: admin123'
-      });
-    }
-    
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/debug-users', async (req, res) => {
-  try {
-    const [users] = await db.promise().query(`
-      SELECT id, email, full_name, is_admin, 
-             LENGTH(password) as password_length,
-             LEFT(password, 10) as password_start
-      FROM users 
-      WHERE email = 'admin@toku.com'
-    `);
-    
-    const [allUsers] = await db.promise().query(`
-      SELECT id, email, is_admin FROM users LIMIT 10
-    `);
-    
-    res.json({
-      adminUser: users[0] || null,
-      allUsers: allUsers,
-      note: 'If no admin user, we need to create one'
-    });
-  } catch (err) {
-    res.json({ error: err.message });
-  }
-});
-
-// Force create admin - USE THIS ONE
-app.get('/api/force-admin', async (req, res) => {
-  try {
-    // Delete existing admin
-    await db.promise().query(`DELETE FROM users WHERE email = 'admin@toku.com'`);
-    
-    // Hash for "admin123"
-    const hashedPassword = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm';
-    
-    // Create new admin
-    await db.promise().query(`
-      INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
-      VALUES ('Super Admin', 'admin@toku.com', ?, 'ADMIN999', 1, 10000)
-    `, [hashedPassword]);
-    
-    res.json({ 
-      success: true, 
-      message: 'Admin created! Use email: admin@toku.com, password: admin123'
-    });
-  } catch (err) {
-    res.json({ success: false, error: err.message });
-  }
-});
-
-app.get('/api/verify-password', async (req, res) => {
-  try {
-    const bcrypt = require('bcryptjs');
-    
-    // Get admin user
-    const [users] = await db.promise().query(`
-      SELECT id, email, password FROM users WHERE email = 'admin@toku.com'
-    `);
-    
-    if (users.length === 0) {
-      return res.json({ error: 'Admin not found' });
-    }
-    
-    const admin = users[0];
-    const testPassword = 'admin123';
-    
-    // Test if password matches
-    const matches = await bcrypt.compare(testPassword, admin.password);
-    
-    res.json({
-      email: admin.email,
-      passwordHash: admin.password.substring(0, 20) + '...',
-      testPassword: testPassword,
-      passwordMatches: matches,
-      message: matches ? '✅ Password is correct!' : '❌ Password does not match'
-    });
-  } catch (err) {
-    res.json({ error: err.message });
-  }
-});
-
-app.get('/api/fix-password', async (req, res) => {
-  try {
-    const bcrypt = require('bcryptjs');
-    
-    // Create fresh hash for "admin123"
-    const salt = await bcrypt.genSalt(10);
-    const newHash = await bcrypt.hash('admin123', salt);
-    
-    // Update admin user
-    await db.promise().query(`
-      UPDATE users SET password = ? WHERE email = 'admin@toku.com'
-    `, [newHash]);
-    
-    // Verify it worked
-    const [users] = await db.promise().query(`
-      SELECT id, email, password FROM users WHERE email = 'admin@toku.com'
-    `);
-    
-    const verifyMatch = await bcrypt.compare('admin123', users[0].password);
-    
-    res.json({
-      success: true,
-      message: 'Password reset!',
-      email: 'admin@toku.com',
-      newPassword: 'admin123',
-      verified: verifyMatch ? '✅ Working!' : '❌ Still not working'
-    });
-  } catch (err) {
-    res.json({ error: err.message });
-  }
-});
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
