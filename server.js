@@ -17,35 +17,41 @@ app.use(express.static(path.join(__dirname, 'public')));
 // ── Database ─────────────────────────────────────
 // ── Database ─────────────────────────────────────
 // ── Database ─────────────────────────────────────
+// ── Database ─────────────────────────────────────
 let db;
 
 if (process.env.DATABASE_URL) {
-  console.log('DATABASE_URL exists, connecting...');
-  console.log('URL starts with:', process.env.DATABASE_URL.substring(0, 50));
+  console.log('📡 DATABASE_URL found');
+  console.log('🔗 URL length:', process.env.DATABASE_URL.length);
   
   try {
+    console.log('🔄 Attempting connection...');
     db = mysql.createConnection(process.env.DATABASE_URL);
     
     db.connect((err) => {
       if (err) {
-        console.error('❌ DB Error Code:', err.code);
-        console.error('❌ DB Error Message:', err.message);
-        console.error('❌ DB Error Fatal:', err.fatal);
+        console.log('❌ CONNECTION FAILED');
+        console.log('📛 Error code:', err.code);
+        console.log('💬 Error message:', err.message);
       } else {
-        console.log('✅ Connected to Aiven MySQL Cloud');
+        console.log('✅ CONNECTED TO MYSQL');
         
-        // Test query to verify connection
-        db.query('SELECT 1', (err, result) => {
-          if (err) console.error('Test query failed:', err);
-          else console.log('Database test query successful');
+        db.query('SELECT 1 + 1 AS result', (err, results) => {
+          if (err) {
+            console.log('❌ Test query failed:', err.message);
+          } else {
+            console.log('✅ Test query successful');
+          }
         });
       }
     });
   } catch (err) {
-    console.error('❌ Connection creation error:', err.message);
+    console.log('❌ CRITICAL ERROR:', err.message);
   }
 } else {
-  console.log('No DATABASE_URL, using local config');
+  console.log('❌ No DATABASE_URL found');
+  console.log('Using local config instead');
+  
   db = mysql.createConnection({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
@@ -58,7 +64,6 @@ if (process.env.DATABASE_URL) {
     else console.log('✅ Connected to Local MySQL');
   });
 }
-
 // Helper: generate referral code
 function generateCode(name) {
   return name.replace(/\s+/g,'').substring(0,4).toUpperCase() +
