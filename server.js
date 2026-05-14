@@ -537,19 +537,130 @@ app.get('/api/test-db', (req, res) => {
   });
 });
 
-// Temporary setup endpoint - REMOVE AFTER RUNNING ONCE
+// Temporary setup endpoint - CREATE ALL TABLES
 app.get('/api/setup-admin', async (req, res) => {
-  console.log('Setup endpoint called');
+  console.log('Setup endpoint called - creating tables');
+  
   try {
-    const [result] = await db.promise().query(`
+    // Create tables
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        full_name VARCHAR(100) NOT NULL,
+        email VARCHAR(150) UNIQUE NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        balance DECIMAL(10,2) DEFAULT 0,
+        referral_code VARCHAR(50) UNIQUE,
+        referred_by INT NULL,
+        has_invested TINYINT DEFAULT 0,
+        is_admin TINYINT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS packages (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        name VARCHAR(50) NOT NULL,
+        price DECIMAL(10,2) NOT NULL,
+        daily_return DECIMAL(10,2) NOT NULL,
+        duration_days INT DEFAULT 7,
+        is_active TINYINT DEFAULT 1
+      )
+    `);
+    
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS investments (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        package_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        daily_return DECIMAL(10,2) NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        days_claimed INT DEFAULT 0,
+        last_claim_date DATETIME NULL,
+        status VARCHAR(20) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (package_id) REFERENCES packages(id)
+      )
+    `);
+    
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS transactions (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        package_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        paystack_ref VARCHAR(100) UNIQUE,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+    
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS claims (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        investment_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        claim_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id),
+        FOREIGN KEY (investment_id) REFERENCES investments(id)
+      )
+    `);
+    
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS withdrawals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        bank_name VARCHAR(100) NOT NULL,
+        account_no VARCHAR(50) NOT NULL,
+        account_name VARCHAR(100) NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id)
+      )
+    `);
+    
+    await db.promise().query(`
+      CREATE TABLE IF NOT EXISTS referrals (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        referrer_id INT NOT NULL,
+        referred_id INT NOT NULL,
+        package_price DECIMAL(10,2) NOT NULL,
+        bonus_amount DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (referrer_id) REFERENCES users(id),
+        FOREIGN KEY (referred_id) REFERENCES users(id)
+      )
+    `);
+    
+    // Insert packages
+    await db.promise().query(`
+      INSERT IGNORE INTO packages (name, price, daily_return, duration_days) VALUES
+      ('Starter', 500, 100, 7),
+      ('Basic', 1000, 200, 7),
+      ('Standard', 2000, 400, 7),
+      ('Premium', 5000, 1000, 7),
+      ('VIP', 10000, 2000, 7)
+    `);
+    
+    // Insert admin user
+    await db.promise().query(`
       INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
       VALUES ('Admin User', 'admin@toku.com', '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm', 'ADMIN1234', 1, 0)
       ON DUPLICATE KEY UPDATE is_admin = 1
     `);
-    console.log('Setup endpoint success');
-    res.json({ success: true, message: 'Admin user ready! Login at /admin/login.html' });
+    
+    res.json({ success: true, message: 'All tables created! Admin user ready. Login at /admin/login.html' });
+    
   } catch (err) {
-    console.error('Setup endpoint error:', err);
+    console.error('Setup error:', err);
     res.json({ success: false, error: err.message });
   }
 });
