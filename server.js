@@ -817,6 +817,37 @@ app.get('/api/force-admin', async (req, res) => {
     res.json({ success: false, error: err.message });
   }
 });
+
+app.get('/api/verify-password', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    
+    // Get admin user
+    const [users] = await db.promise().query(`
+      SELECT id, email, password FROM users WHERE email = 'admin@toku.com'
+    `);
+    
+    if (users.length === 0) {
+      return res.json({ error: 'Admin not found' });
+    }
+    
+    const admin = users[0];
+    const testPassword = 'admin123';
+    
+    // Test if password matches
+    const matches = await bcrypt.compare(testPassword, admin.password);
+    
+    res.json({
+      email: admin.email,
+      passwordHash: admin.password.substring(0, 20) + '...',
+      testPassword: testPassword,
+      passwordMatches: matches,
+      message: matches ? '✅ Password is correct!' : '❌ Password does not match'
+    });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
