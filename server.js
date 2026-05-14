@@ -848,6 +848,38 @@ app.get('/api/verify-password', async (req, res) => {
     res.json({ error: err.message });
   }
 });
+
+app.get('/api/fix-password', async (req, res) => {
+  try {
+    const bcrypt = require('bcryptjs');
+    
+    // Create fresh hash for "admin123"
+    const salt = await bcrypt.genSalt(10);
+    const newHash = await bcrypt.hash('admin123', salt);
+    
+    // Update admin user
+    await db.promise().query(`
+      UPDATE users SET password = ? WHERE email = 'admin@toku.com'
+    `, [newHash]);
+    
+    // Verify it worked
+    const [users] = await db.promise().query(`
+      SELECT id, email, password FROM users WHERE email = 'admin@toku.com'
+    `);
+    
+    const verifyMatch = await bcrypt.compare('admin123', users[0].password);
+    
+    res.json({
+      success: true,
+      message: 'Password reset!',
+      email: 'admin@toku.com',
+      newPassword: 'admin123',
+      verified: verifyMatch ? '✅ Working!' : '❌ Still not working'
+    });
+  } catch (err) {
+    res.json({ error: err.message });
+  }
+});
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
