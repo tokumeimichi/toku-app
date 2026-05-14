@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Toku Invest - Earn 20% Daily Returns | Nigeria's Premier Investment Platform</title>
+  <meta name="description" content="Invest from ₦500 and earn 20% daily returns for 7 days. Instant referral bonuses, secure Paystack payments. Join thousands of Nigerians earning daily with Toku.">
+  <meta name="keywords" content="investment Nigeria, daily ROI, Toku invest, earn money online, Paystack investment, passive income Nigeria">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: #0f0c29;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    
+    /* Animated Gradient Background */
+    .hero {
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(108,99,255,0.1) 0%, transparent 70%);
+      animation: pulse 10s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: translate(-25%, -25%) scale(1); opacity: 0.5; }
+      50% { transform: translate(-25%, -25%) scale(1.2); opacity: 0.8; }
+    }
+    
+    .navbar {
+      background: rgba(15, 12, 41, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 1rem 0;
+      transition: all 0.3s;
+    }
+    
+    .navbar-brand {
+      font-size: 1.8rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .nav-link {
+      color: #fff !important;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    
+    .nav-link:hover {
+      color: #6c63ff !important;
+    }
+    
+    .btn-gradient {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      border: none;
+      padding: 12px 32px;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .btn-gradient:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(108, 99, 255, 0.3);
+    }
+    
+    .btn-outline-gradient {
+      background: transparent;
+      border: 2px solid #6c63ff;
+      padding: 10px 28px;
+      border-radius: 50px;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    
+    .btn-outline-gradient:hover {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      border-color: transparent;
+      transform: translateY(-2px);
+    }
+    
+    .hero-content {
+      padding: 120px 0 80px;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .hero-title {
+      font-size: 3.5rem;
+      font-weight: 800;
+      margin-bottom: 20px;
+      line-height: 1.2;
+    }
+    
+    .hero-title span {
+      background: linear-gradient(135deg, #6c63ff, #48c6ef);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .hero-subtitle {
+      font-size: 1.2rem;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 30px;
+    }
+    
+    .stats-badge {
+      display: inline-block;
+      background: rgba(108, 99, 255, 0.2);
+      backdrop-filter: blur(10px);
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+    }
+    
+    /* Package Cards */
+    .package-card {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px 20px;
+      text-align: center;
+      transition: 0.3s;
+      border: 1px solid rgba(255,255,255,0.1);
+      margin-bottom: 20px;
+    }
+    
+    .package-card:hover {
+      transform: translateY(-10px);
+      border-color: #6c63ff;
+      box-shadow: 0 20px 40px rgba(108,99,255,0.2);
+    }
+    
+    .package-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+    
+    .package-name {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    
+    .package-price {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #6c63ff;
+      margin-bottom: 15px;
+    }
+    
+    .package-daily {
+      font-size: 1rem;
+      color: #48c6ef;
+      margin-bottom: 20px;
+    }
+    
+    .feature-card {
+      background: rgba(255,255,255,0.05);
+      border-radius: 15px;
+      padding: 25px;
+      text-align: center;
+      transition: 0.3s;
+    }
+    
+    .feature-card:hover {
+      background: rgba(108,99,255,0.1);
+    }
+    
+    .feature-icon {
+      font-size: 2.5rem;
+      color: #6c63ff;
+      margin-bottom: 15px;
+    }
+    
+    .section-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 50px;
+      text-align: center;
+    }
+    
+    footer {
+      background: #0f0c29;
+      padding: 40px 0;
+      text-align: center;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .hero-title {
+        font-size: 2rem;
+      }
+      .hero-subtitle {
+        font-size: 1rem;
+      }
+      .section-title {
+        font-size: 1.8rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg fixed-top">
+  <div class="container">
+    <a class="navbar-brand" href="#">Toku<span style="color:#48c6ef;">.</span></a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item"><a class="nav-link" href="#home">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="#packages">Packages</a></li>
+        <li class="nav-item"><a class="nav-link" href="#how-it-works">How It Works</a></li>
+        <li class="nav-item"><a class="nav-link" href="#features">Features</a></li>
+      </ul>
+      <a href="/user/login.html" class="btn btn-outline-gradient ms-lg-3">Login</a>
+      <a href="/user/signup.html" class="btn btn-gradient ms-2">Sign Up</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero" id="home">
+  <div class="container hero-content">
+    <div class="row align-items-center">
+      <div class="col-lg-6">
+        <div class="stats-badge">
+          <i class="fas fa-users"></i> Trusted by 500+ Nigerian Investors
+        </div>
+        <h1 class="hero-title">Earn <span>20% Daily</span> Returns on Your Investment</h1>
+        <p class="hero-subtitle">Start with as low as ₦500 and watch your money grow daily. Secure, transparent, and instant payouts via Paystack.</p>
+        <div class="d-flex gap-3">
+          <a href="/user/signup.html" class="btn btn-gradient">Get Started Now</a>
+          <a href="#packages" class="btn btn-outline-gradient">View Packages</a>
+        </div>
+        
+        <div class="row mt-5">
+          <div class="col-4">
+            <h3 class="text-gradient">₦50M+</h3>
+            <small>Total Paid Out</small>
+          </div>
+          <div class="col-4">
+            <h3 class="text-gradient">500+</h3>
+            <small>Active Investors</small>
+          </div>
+          <div class="col-4">
+            <h3 class="text-gradient">7 Days</h3>
+            <small>Investment Cycle</small>
+          </div>
+        </div>
+      </div>
+      <div class="col-lg-6 text-center">
+        <img src="https://placehold.co/500x400/6c63ff/white?text=Investment+Growth+Chart" alt="Investment Growth" class="img-fluid" style="border-radius: 20px;">
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="packages" class="py-5" style="background: #1a1a2e;">
+  <div class="container">
+    <h2 class="section-title">Our Investment <span style="color:#6c63ff;">Packages</span></h2>
+    <div class="row">
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="package-card">
+          <div class="package-icon">🌟</div>
+          <h3 class="package-name">Starter</h3>
+          <div class="package-price">₦500</div>
+          <div class="package-daily">Daily Return: ₦100</div>
+          <small>7 days | 20% daily</small>
+          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="package-card">
+          <div class="package-icon">⭐</div>
+          <h3 class="package-name">Basic</h3>
+          <div class="package-price">₦1,000</div>
+          <div class="package-daily">Daily Return: ₦200</div>
+          <small>7 days | 20% daily</small>
+          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="package-card">
+          <div class="package-icon">💎</div>
+          <h3 class="package-name">Standard</h3>
+          <div class="package-price">₦2,000</div>
+          <div class="package-daily">Daily Return: ₦400</div>
+          <small>7 days | 20% daily</small>
+          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="package-card">
+          <div class="package-icon">👑</div>
+          <h3 class="package-name">Premium</h3>
+          <div class="package-price">₦5,000</div>
+          <div class="package-daily">Daily Return: ₦1,000</div>
+          <small>7 days | 20% daily</small>
+          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+        </div>
+      </div>
+      <div class="col-lg-2 col-md-4 col-6">
+        <div class="package-card">
+          <div class="package-icon">🏆</div>
+          <h3 class="package-name">VIP</h3>
+          <div class="package-price">₦10,000</div>
+          <div class="package-daily">Daily Return: ₦2,000</div>
+          <small>7 days | 20% daily</small>
+          <a href="/user/signup.html" class="btn btn-gradient mt-3 w-100">Invest Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works" class="py-5">
+  <div class="container">
+    <h2 class="section-title">How <span style="color:#6c63ff;">It Works</span></h2>
+    <div class="row">
+      <div class="col-md-3">
+        <div class="feature-card">
+          <div class="feature-icon">1️⃣</div>
+          <h4>Sign Up</h4>
+          <p>Create your free account in 2 minutes</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="feature-card">
+          <div class="feature-icon">2️⃣</div>
+          <h4>Choose Package</h4>
+          <p>Select any investment package from ₦500</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="feature-card">
+          <div class="feature-icon">3️⃣</div>
+          <h4>Pay via Paystack</h4>
+          <p>Secure payment with card or bank transfer</p>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="feature-card">
+          <div class="feature-icon">4️⃣</div>
+          <h4>Earn Daily</h4>
+          <p>Claim 20% returns every day for 7 days</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="features" class="py-5" style="background: #1a1a2e;">
+  <div class="container">
+    <h2 class="section-title">Why Choose <span style="color:#6c63ff;">Toku?</span></h2>
+    <div class="row">
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-shield-alt"></i></div>
+          <h4>Secure & Safe</h4>
+          <p>All payments processed via Paystack, Nigeria's leading payment gateway</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-gift"></i></div>
+          <h4>10% Referral Bonus</h4>
+          <p>Earn instant 10% when your referrals invest for the first time</p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="feature-card">
+          <div class="feature-icon"><i class="fas fa-clock"></i></div>
+          <h4>Instant Withdrawals</h4>
+          <p>Withdraw your earnings directly to your bank account</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="row">
+      <div class="col-12">
+        <h3 class="mb-3">Toku<span style="color:#48c6ef;">.</span></h3>
+        <p class="text-muted">© 2025 Toku Investment Platform. All rights reserved.</p>
+        <div class="mt-3">
+          <a href="/user/login.html" class="text-white me-3">Login</a>
+          <a href="/user/signup.html" class="text-white me-3">Sign Up</a>
+          <a href="#" class="text-white">Contact Us</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
