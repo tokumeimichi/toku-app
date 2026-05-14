@@ -793,6 +793,30 @@ app.get('/api/debug-users', async (req, res) => {
     res.json({ error: err.message });
   }
 });
+
+// Force create admin - USE THIS ONE
+app.get('/api/force-admin', async (req, res) => {
+  try {
+    // Delete existing admin
+    await db.promise().query(`DELETE FROM users WHERE email = 'admin@toku.com'`);
+    
+    // Hash for "admin123"
+    const hashedPassword = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm';
+    
+    // Create new admin
+    await db.promise().query(`
+      INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
+      VALUES ('Super Admin', 'admin@toku.com', ?, 'ADMIN999', 1, 10000)
+    `, [hashedPassword]);
+    
+    res.json({ 
+      success: true, 
+      message: 'Admin created! Use email: admin@toku.com, password: admin123'
+    });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
