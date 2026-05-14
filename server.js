@@ -15,9 +15,6 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ── Database ─────────────────────────────────────
-// ── Database ─────────────────────────────────────
-// ── Database ─────────────────────────────────────
-// ── Database ─────────────────────────────────────
 let db;
 
 if (process.env.DATABASE_URL) {
@@ -64,6 +61,7 @@ if (process.env.DATABASE_URL) {
     else console.log('✅ Connected to Local MySQL');
   });
 }
+
 // Helper: generate referral code
 function generateCode(name) {
   return name.replace(/\s+/g,'').substring(0,4).toUpperCase() +
@@ -665,13 +663,21 @@ app.get('/api/setup-admin', async (req, res) => {
   }
 });
 
+// FIXED: Add phone column correctly
 app.get('/api/fix-signup', async (req, res) => {
   try {
-    // Add phone column if missing
-    await db.promise().query(`
-      ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20) NULL
+    // Check if phone column exists
+    const [columns] = await db.promise().query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'users' AND COLUMN_NAME = 'phone'
     `);
-    res.json({ success: true, message: 'Signup fixed! Phone column added.' });
+    
+    if (columns.length === 0) {
+      await db.promise().query(`ALTER TABLE users ADD COLUMN phone VARCHAR(20) NULL`);
+      res.json({ success: true, message: 'Phone column added successfully!' });
+    } else {
+      res.json({ success: true, message: 'Phone column already exists.' });
+    }
   } catch (err) {
     res.json({ success: false, error: err.message });
   }
