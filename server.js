@@ -692,6 +692,39 @@ app.get('/api/reset-admin', async (req, res) => {
   }
 });
 
+app.get('/api/create-admin', async (req, res) => {
+  try {
+    // Create admin user
+    const [result] = await db.promise().query(`
+      INSERT INTO users (full_name, email, password, referral_code, is_admin, balance) 
+      VALUES (
+        'Super Admin', 
+        'admin@toku.com', 
+        '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm', 
+        'ADMIN2024', 
+        1, 
+        0
+      )
+      ON DUPLICATE KEY UPDATE 
+        is_admin = 1,
+        password = '$2a$10$N9qo8uLOickgx2ZMRZoMy.MrJqGzYKFjJdj9M5qQYkIqWqZjvBJGm'
+    `);
+    
+    // Verify admin was created
+    const [admin] = await db.promise().query(`
+      SELECT id, email, full_name, is_admin FROM users WHERE email = 'admin@toku.com'
+    `);
+    
+    res.json({ 
+      success: true, 
+      message: 'Admin user created!',
+      admin: admin[0]
+    });
+  } catch (err) {
+    res.json({ success: false, error: err.message });
+  }
+});
+
 // ── Start Server ──────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
